@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="บวกเลขเร็ว">
+<title>เกมบวกเลขเร็ว</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --surface: rgba(255,255,255,0.06);
+    --surface-hi: rgba(255,255,255,0.11);
+    --accent: #f7c948;
+    --accent2: #ff6b6b;
+    --green: #43e97b;
+    --blue: #5eb8ff;
+    --purple: #c084fc;
+    --text: #ffffff;
+    --muted: rgba(255,255,255,0.42);
+    --r: 22px;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 55%, #24243e 100%);
+    font-family: 'Kanit', Arial, sans-serif;
+    color: var(--text);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* ═══════ LAYOUT ═══════ */
+  .app {
+    width: 100dvw; height: 100dvh;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas: "header header" "toolbar toolbar" "left right";
+    padding:
+      env(safe-area-inset-top,14px)
+      env(safe-area-inset-right,22px)
+      env(safe-area-inset-bottom,14px)
+      env(safe-area-inset-left,22px);
+    gap: 0 18px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    grid-area: header;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .title { font-size: clamp(18px,2.2vw,26px); font-weight: 800; white-space:nowrap; }
+  .title span { color: var(--accent); }
+
+  .header-controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
+  .pillgroup {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 999px;
+    padding: 4px;
+    gap: 4px;
+  }
+  .pill-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 12.5px; font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+  }
+  .pill-btn.on-mode { background: var(--accent); color: #3a2e00; }
+  .pill-btn.on-diff { background: var(--purple); color: #1a0a2e; }
+  .pill-btn.on-time { background: var(--blue); color: #002033; }
+
+  .score-pill {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 999px;
+    padding: 6px 16px;
+    display: flex; gap: 16px;
+    align-items: center;
+  }
+  .score-item { display: flex; flex-direction: column; align-items: center; }
+  .score-label { font-size: 8.5px; font-weight: 400; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+  .score-value { font-size: 17px; font-weight: 700; line-height: 1; }
+  .score-value.green { color: var(--green); }
+  .score-value.red   { color: var(--accent2); }
+
+  .reset-btn {
+    border: none; border-radius: 999px;
+    background: rgba(255,107,107,0.12);
+    border: 1px solid rgba(255,107,107,0.28);
+    color: var(--accent2);
+    font-family: 'Kanit', sans-serif;
+    font-size: 12.5px; font-weight: 600;
+    padding: 8px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform .08s, background .15s;
+  }
+  .reset-btn:active { transform: scale(.93); background: rgba(255,107,107,0.22); }
+
+  .stats-btn {
+    border: none; border-radius: 999px;
+    background: rgba(94,184,255,0.12);
+    border: 1px solid rgba(94,184,255,0.28);
+    color: var(--blue);
+    font-family: 'Kanit', sans-serif;
+    font-size: 12.5px; font-weight: 600;
+    padding: 8px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform .08s, background .15s;
+  }
+  .stats-btn:active { transform: scale(.93); background: rgba(94,184,255,0.22); }
+
+  /* ── STATS MODAL ── */
+  .stats-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(10,8,25,.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    align-items: center; justify-content: center;
+    z-index: 100;
+    padding: 24px;
+  }
+  .stats-overlay.visible { display: flex; }
+
+  .stats-modal {
+    width: 100%; max-width: 640px;
+    max-height: 86vh;
+    background: linear-gradient(160deg, #211c44, #2c2657);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 28px;
+    padding: 26px 28px;
+    display: flex; flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.4);
+  }
+
+  .stats-head {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .stats-title { font-size: 22px; font-weight: 800; }
+  .stats-title span { color: var(--blue); }
+  .stats-close {
+    border:none; background: var(--surface); color: var(--text);
+    width: 34px; height: 34px; border-radius: 50%;
+    font-size: 16px; cursor:pointer;
+  }
+
+  .stats-tabs { display:flex; gap:6px; flex-wrap:wrap; }
+  .stats-tab {
+    border:none; border-radius: 999px; padding: 6px 14px;
+    background: var(--surface); color: var(--muted);
+    font-family:'Kanit',sans-serif; font-size:12px; font-weight:600;
+    cursor:pointer; white-space:nowrap;
+  }
+  .stats-tab.on-stat { background: var(--blue); color:#002033; }
+
+  .stats-body { overflow-y: auto; flex:1; display:flex; flex-direction:column; gap:10px; }
+  .stats-body::-webkit-scrollbar { width:4px; }
+  .stats-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius:4px; }
+
+  .stats-empty { color: var(--muted); font-size: 14px; text-align:center; padding: 30px 0; }
+
+  /* summary cards row */
+  .stats-summary-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .stats-sumcard {
+    background: var(--surface); border:1px solid rgba(255,255,255,.08);
+    border-radius:16px; padding:12px 10px; text-align:center;
+  }
+  .stats-sumcard .sc-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+  .stats-sumcard .sc-value { font-size:24px; font-weight:800; margin-top:2px; }
+  .stats-sumcard .sc-value.green { color:var(--green); }
+  .stats-sumcard .sc-value.blue  { color:var(--blue); }
+  .stats-sumcard .sc-value.gold  { color:var(--accent); }
+
+  /* record row */
+  .stat-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    padding: 10px 16px;
+  }
+  .stat-row.is-best { border-color: rgba(247,201,72,.45); background: rgba(247,201,72,.06); }
+  .stat-badge { font-size: 18px; }
+  .stat-meta { display:flex; flex-direction:column; gap:2px; }
+  .stat-meta .meta-main { font-size: 14px; font-weight:700; }
+  .stat-meta .meta-sub  { font-size: 11px; color: var(--muted); }
+  .stat-result { text-align:right; }
+  .stat-result .res-main { font-size:16px; font-weight:800; }
+  .stat-result .res-main.green { color: var(--green); }
+  .stat-result .res-main.gold  { color: var(--accent); }
+  .stat-result .res-sub  { font-size:10px; color: var(--muted); }
+  .stat-del {
+    border:none; background:transparent; color: var(--muted);
+    font-size: 16px; cursor:pointer; padding:4px;
+  }
+  .stat-del:active { color: var(--accent2); }
+
+  .stats-footer { display:flex; justify-content:flex-end; }
+  .stats-clear {
+    border:none; border-radius:12px; padding:8px 18px;
+    background: rgba(255,107,107,.12); border:1px solid rgba(255,107,107,.28);
+    color: var(--accent2); font-family:'Kanit',sans-serif; font-size:12.5px; font-weight:600;
+    cursor:pointer;
+  }
+
+  /* ── TOOLBAR (custom timer input, hidden by default) ── */
+  .toolbar {
+    grid-area: toolbar;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 8px;
+  }
+  .toolbar.visible { display: flex; }
+  .toolbar input[type=number] {
+    width: 70px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Kanit', sans-serif;
+    font-size: 15px;
+    padding: 6px 10px;
+    text-align: center;
+  }
+  .toolbar label { font-size: 13px; color: var(--muted); }
+  .toolbar button {
+    border: none; border-radius: 10px;
+    background: var(--blue); color: #002033;
+    font-family: 'Kanit', sans-serif; font-weight: 600; font-size: 13px;
+    padding: 7px 16px; cursor: pointer;
+  }
+
+  /* ── LEFT ── */
+  .left {
+    grid-area: left;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px;
+    min-height: 0;
+  }
+
+  /* ── COUNTDOWN BAR (top of left, shows during play) ── */
+  .countdown-wrap {
+    width: 100%; max-width: 560px;
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 16px;
+    padding: 8px 18px;
+  }
+  .cd-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; white-space: nowrap; }
+  .cd-bar-wrap { flex:1; height: 8px; background: rgba(255,255,255,.08); border-radius: 99px; overflow:hidden; }
+  .cd-bar { height:100%; width:100%; background: linear-gradient(90deg, var(--green), var(--accent)); border-radius:99px; transition: width 1s linear, background 0.4s; }
+  .cd-bar.warn { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .cd-bar.danger { background: var(--accent2); }
+  .cd-time { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 52px; text-align:right; transition: color .3s; }
+  .cd-time.danger { color: var(--accent2); }
+  .cd-playbtn {
+    border:none; border-radius: 10px; padding: 6px 14px;
+    font-family:'Kanit',sans-serif; font-weight:600; font-size:13px;
+    cursor:pointer; white-space:nowrap;
+    background: var(--green); color:#0a2e18;
+  }
+  .cd-playbtn.running { background: var(--accent2); color:#3a0000; }
+
+  /* ════════════════════════════════
+     SINGLE-QUESTION CARD
+  ════════════════════════════════ */
+  .card {
+    width: 100%; max-width: 520px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 32px;
+    padding: 22px 40px 18px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 10px;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% -10%, rgba(247,201,72,0.09) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .equation { display: flex; align-items: center; gap: clamp(16px,2.6vw,38px); }
+  .num {
+    font-size: clamp(58px,8.6vw,104px);
+    font-weight: 800; line-height: 1;
+    min-width: 1.6ch; text-align: center;
+  }
+  .num.pop { animation: pop .22s ease; }
+  @keyframes pop {
+    0%  { transform: scale(.65); opacity:0; }
+    70% { transform: scale(1.08); }
+    100%{ transform: scale(1);   opacity:1; }
+  }
+  .op { font-size: clamp(36px,5.2vw,62px); font-weight: 300; color: var(--accent); line-height:1; }
+  .divider { width:75%; height:2px; background:rgba(255,255,255,.08); border-radius:2px; }
+  .answer-zone { min-height: clamp(46px,6vw,66px); display:flex; align-items:center; justify-content:center; }
+  .answer-text {
+    font-size: clamp(40px,6vw,62px); font-weight:800; color:var(--accent);
+    opacity:0; transform:translateY(6px);
+    transition: opacity .28s, transform .28s, color .25s;
+  }
+  .answer-text.visible { opacity:1; transform:translateY(0); }
+  .answer-placeholder { font-size: clamp(20px,2.6vw,28px); font-weight:300; color:var(--muted); letter-spacing:.08em; }
+  .result-badge {
+    font-size:13px; font-weight:600; padding:5px 16px;
+    border-radius:999px; opacity:0; transition:opacity .4s; min-height:26px;
+  }
+  .result-badge.correct { background:rgba(67,233,123,.18); color:var(--green); opacity:1; }
+  .result-badge.wrong   { background:rgba(255,107,107,.18); color:var(--accent2); opacity:1; }
+  .result-badge.reveal  { background:rgba(247,201,72,.15);  color:var(--accent);  opacity:1; }
+  .streak { font-size:12px; font-weight:600; color:var(--accent); letter-spacing:.06em; min-height:16px; }
+
+  @keyframes flashGreen { 0%,100%{box-shadow:none} 40%{box-shadow:0 0 0 5px rgba(67,233,123,.4)} }
+  @keyframes flashRed   { 0%,100%{box-shadow:none} 40%{box-shadow:0 0 0 5px rgba(255,107,107,.4)} }
+  .card.flash-correct { animation: flashGreen .5s ease; }
+  .card.flash-wrong   { animation: flashRed   .5s ease; }
+
+  /* ════════════════════════════════
+     CHOICE MODE (2-option)
+  ════════════════════════════════ */
+  .choice-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 6px;
+  }
+  .choice-btn {
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 22px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Kanit', sans-serif;
+    font-size: clamp(36px, 6.5vw, 58px);
+    font-weight: 800;
+    padding: clamp(20px, 3.5vh, 34px) 0;
+    cursor: pointer;
+    transition: transform .08s, background .15s, border-color .15s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .choice-btn:active { transform: scale(.95); }
+  .choice-btn:disabled { cursor: default; }
+  .choice-btn.choice-correct {
+    background: rgba(67,233,123,.18);
+    border-color: var(--green);
+    color: var(--green);
+  }
+  .choice-btn.choice-wrong {
+    background: rgba(255,107,107,.18);
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+  .choice-btn.choice-dim { opacity: .35; }
+
+  /* ════════════════════════════════
+     10-QUESTION SHEET
+  ════════════════════════════════ */
+  .sheet-wrap {
+    width: 100%; max-width: 560px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    flex: 1;
+    position: relative;
+  }
+  .sheet-wrap.visible { display: flex; }
+
+  .sheet-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 4px;
+  }
+  .sheet-progress { font-size: 12.5px; font-weight: 600; color: var(--muted); white-space:nowrap; }
+  .sheet-progress span { color: var(--text); }
+  .prog-bar-wrap { flex: 1; height: 6px; background: rgba(255,255,255,.08); border-radius: 99px; margin: 0 14px; overflow: hidden; }
+  .prog-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--green), var(--accent)); border-radius: 99px; transition: width .35s ease; }
+
+  .sheet-list { flex: 1; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; padding-right: 4px; }
+  .sheet-list::-webkit-scrollbar { width: 4px; }
+  .sheet-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius:4px; }
+
+  .q-row {
+    display: grid;
+    grid-template-columns: 26px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 13px;
+    padding: 7px 14px;
+    transition: border-color .2s, background .2s;
+  }
+  .q-row.active-row { border-color: rgba(247,201,72,.5); background: rgba(247,201,72,.06); }
+  .q-row.done-correct { border-color: rgba(67,233,123,.35); background: rgba(67,233,123,.06); }
+  .q-row.done-wrong   { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
+
+  .q-num { font-size:12.5px; font-weight:700; color:var(--muted); text-align:right; }
+  .q-num.active-num { color: var(--accent); }
+
+  .q-eq { font-size: clamp(16px,2.1vw,22px); font-weight:700; }
+  .q-eq .q-blank {
+    display: inline-block; min-width: 34px;
+    border-bottom: 2px solid rgba(255,255,255,.25);
+    text-align: center; margin-left: 6px;
+    color: var(--muted); font-weight:400;
+  }
+  .q-eq .q-blank.filled { color: var(--text); border-color: var(--accent); }
+  .q-eq .q-blank.correct-ans { color: var(--green); border-color: var(--green); }
+  .q-eq .q-blank.wrong-ans   { color: var(--accent2); border-color: var(--accent2); }
+
+  .q-icon { font-size: 17px; min-width: 20px; text-align:center; }
+
+  /* summary overlay */
+  .summary {
+    display: none;
+    position: absolute; inset: 0;
+    background: rgba(15,12,41,.94);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14px;
+    z-index: 10;
+    border-radius: 24px;
+  }
+  .summary.visible { display: flex; }
+  .sum-title { font-size: 26px; font-weight:800; }
+  .sum-score { font-size: 50px; font-weight:800; line-height:1; }
+  .sum-score .sum-c { color: var(--green); }
+  .sum-score .sum-w { color: var(--accent2); }
+  .sum-time  { font-size: 18px; font-weight:600; color: var(--blue); }
+  .sum-msg   { font-size: 14px; color: var(--muted); }
+  .sum-again {
+    border: none; border-radius: 16px; padding: 11px 32px;
+    background: var(--accent); color: #3a2e00;
+    font-family:'Kanit',sans-serif; font-size:16px; font-weight:700;
+    cursor: pointer; transition: transform .08s;
+  }
+  .sum-again:active { transform: scale(.94); }
+
+  /* ── RIGHT ── */
+  .right {
+    grid-area: right;
+    display: flex; flex-direction: column;
+    gap: 10px; justify-content: center;
+  }
+  .numpad {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 9px; align-content: center; flex:1;
+  }
+  .key {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 15px;
+    padding: clamp(11px,1.8vh,19px) 0;
+    font-family:'Kanit',sans-serif;
+    font-size: clamp(19px,2.5vh,29px); font-weight:600;
+    color: var(--text); cursor:pointer;
+    transition: background .1s, transform .07s;
+    -webkit-user-select:none; user-select:none;
+  }
+  .key:active { transform:scale(.91); background:var(--surface-hi); }
+  .key.action { background:rgba(247,201,72,.13); border-color:rgba(247,201,72,.28); color:var(--accent); }
+  .key.action:active { background:rgba(247,201,72,.24); }
+  .key.del    { background:rgba(255,107,107,.10); border-color:rgba(255,107,107,.22); color:var(--accent2); font-size:clamp(14px,1.8vh,21px); }
+  .controls { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .btn {
+    border:none; border-radius:15px; padding:clamp(10px,1.6vh,16px);
+    font-family:'Kanit',sans-serif; font-size:clamp(13px,1.6vh,17px); font-weight:600;
+    cursor:pointer; transition:transform .07s, opacity .1s;
+    -webkit-user-select:none; user-select:none;
+  }
+  .btn:active { transform:scale(.94); opacity:.85; }
+  .btn-new    { background:var(--green);  color:#0f3020; }
+  .btn-reveal { background:var(--accent); color:#3a2e00; }
+  .btn-batch  { background: var(--purple); color:#1a0a2e; grid-column:1/-1; }
+
+  /* time-up overlay flash on whole left col */
+  @keyframes timeUpPulse {
+    0%,100% { box-shadow: none; }
+    50% { box-shadow: 0 0 0 6px rgba(255,107,107,.5); }
+  }
+  .timeup-pulse { animation: timeUpPulse .6s ease 2; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="title">บวก<span>เลข</span>เร็ว ⚡</div>
+
+    <div class="header-controls">
+      <div class="pillgroup" id="modeGroup">
+        <button class="pill-btn on-mode" data-mode="A" onclick="setQuestionMode('A')">🎯 ทีละข้อ</button>
+        <button class="pill-btn" data-mode="B" onclick="setQuestionMode('B')">📋 10 ข้อ</button>
+        <button class="pill-btn" data-mode="C" onclick="setQuestionMode('C')">🔘 เลือกตอบ</button>
+      </div>
+
+      <div class="pillgroup" id="diffGroup">
+        <button class="pill-btn on-diff" data-diff="normal" onclick="setDifficulty('normal')">😊 ปกติ</button>
+        <button class="pill-btn" data-diff="hard" onclick="setDifficulty('hard')">🔥 ยาก</button>
+      </div>
+
+      <div class="pillgroup" id="timeGroup">
+        <button class="pill-btn" data-secs="30" onclick="setTimerPreset(30)">30 วิ</button>
+        <button class="pill-btn" data-secs="60" onclick="setTimerPreset(60)">1 นาที</button>
+        <button class="pill-btn" data-secs="180" onclick="setTimerPreset(180)">3 นาที</button>
+        <button class="pill-btn" data-secs="custom" onclick="showCustomTimer()">กำหนดเอง</button>
+        <button class="pill-btn" data-secs="0" onclick="setTimerPreset(0)">ไม่จับเวลา</button>
+      </div>
+
+      <button class="reset-btn" onclick="resetScore()">↺ รีเซ็ตคะแนน</button>
+
+      <button class="stats-btn" onclick="openStats()">🏆 สถิติ</button>
+
+      <div class="score-pill">
+        <div class="score-item"><span class="score-label">ถูก</span><span class="score-value green" id="scoreCorrect">0</span></div>
+        <div class="score-item"><span class="score-label">ผิด</span><span class="score-value red" id="scoreWrong">0</span></div>
+        <div class="score-item"><span class="score-label">รวม</span><span class="score-value" id="scoreTotal">0</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CUSTOM TIMER TOOLBAR -->
+  <div class="toolbar" id="customToolbar">
+    <label>กำหนดเวลาเอง (วินาที):</label>
+    <input type="number" id="customSecsInput" min="5" max="3600" value="90">
+    <button onclick="applyCustomTimer()">✓ ใช้เวลานี้</button>
+  </div>
+
+  <!-- LEFT -->
+  <div class="left" id="leftCol">
+
+    <!-- COUNTDOWN BAR -->
+    <div class="countdown-wrap" id="countdownWrap" style="display:none">
+      <span class="cd-label">⏱ เวลาที่เหลือ</span>
+      <div class="cd-bar-wrap"><div class="cd-bar" id="cdBar"></div></div>
+      <span class="cd-time" id="cdTime">00:00</span>
+      <button class="cd-playbtn" id="cdPlayBtn" onclick="cdToggle()">▶ เริ่ม</button>
+    </div>
+
+    <!-- SINGLE CARD -->
+    <div class="card" id="card">
+      <div class="equation">
+        <span class="num" id="num1">—</span>
+        <span class="op">+</span>
+        <span class="num" id="num2">—</span>
+      </div>
+      <div class="divider"></div>
+      <div class="answer-zone">
+        <span class="answer-text" id="answerText"></span>
+        <span class="answer-placeholder" id="answerPH">กดตัวเลข…</span>
+      </div>
+      <div class="result-badge" id="resultBadge"></div>
+      <div class="streak" id="streak"></div>
+    </div>
+
+    <!-- CHOICE CARD (2-option) -->
+    <div class="card" id="cardC" style="display:none">
+      <div class="equation">
+        <span class="num" id="cNum1">—</span>
+        <span class="op">+</span>
+        <span class="num" id="cNum2">—</span>
+      </div>
+      <div class="divider"></div>
+      <div class="choice-row">
+        <button class="choice-btn" id="choiceBtn0" onclick="choosePick(0)"></button>
+        <button class="choice-btn" id="choiceBtn1" onclick="choosePick(1)"></button>
+      </div>
+      <div class="result-badge" id="resultBadgeC"></div>
+      <div class="streak" id="streakC"></div>
+    </div>
+
+    <!-- 10-QUESTION SHEET -->
+    <div class="sheet-wrap" id="sheetWrap">
+      <div class="sheet-header">
+        <span class="sheet-progress">ข้อ <span id="sheetCur">1</span> / <span id="sheetTotal">10</span></span>
+        <div class="prog-bar-wrap"><div class="prog-bar" id="progBar"></div></div>
+        <span class="sheet-progress" id="sheetScore">✓ 0 &nbsp; ✗ 0</span>
+      </div>
+      <div class="sheet-list" id="sheetList"></div>
+      <div class="summary" id="summary">
+        <div class="sum-title" id="sumTitle">🎉 จบแล้ว!</div>
+        <div class="sum-score">
+          <span class="sum-c" id="sumC">0</span>
+          <span style="color:var(--muted);font-size:30px"> / </span>
+          <span class="sum-w" id="sumW">0</span>
+        </div>
+        <div class="sum-time" id="sumTime"></div>
+        <div class="sum-msg" id="sumMsg"></div>
+        <button class="sum-again" onclick="batchGenerate()">🔀 ชุดใหม่</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="numpad" id="numpad">
+      <button class="key" onclick="press(7)">7</button>
+      <button class="key" onclick="press(8)">8</button>
+      <button class="key" onclick="press(9)">9</button>
+      <button class="key" onclick="press(4)">4</button>
+      <button class="key" onclick="press(5)">5</button>
+      <button class="key" onclick="press(6)">6</button>
+      <button class="key" onclick="press(1)">1</button>
+      <button class="key" onclick="press(2)">2</button>
+      <button class="key" onclick="press(3)">3</button>
+      <button class="key del" onclick="del()">⌫</button>
+      <button class="key" onclick="press(0)">0</button>
+      <button class="key action" onclick="confirm_()">✓</button>
+    </div>
+    <div class="controls" id="controlsA">
+      <button class="btn btn-new"    onclick="generate()">🔀 สุ่มใหม่</button>
+      <button class="btn btn-reveal" onclick="showAnswer()">💡 เฉลย</button>
+    </div>
+    <div class="controls" id="controlsB" style="display:none">
+      <button class="btn btn-reveal" onclick="batchReveal()">💡 เฉลยข้อนี้</button>
+      <button class="btn btn-batch"  onclick="batchGenerate()">🔀 ชุดใหม่ 10 ข้อ</button>
+    </div>
+    <div class="controls" id="controlsC" style="display:none">
+      <button class="btn btn-new" style="grid-column:1/-1" onclick="choiceGenerate()">🔀 สุ่มใหม่</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- STATS MODAL -->
+<div class="stats-overlay" id="statsOverlay">
+  <div class="stats-modal">
+    <div class="stats-head">
+      <div class="stats-title">🏆 สถิติ<span>ของฉัน</span></div>
+      <button class="stats-close" onclick="closeStats()">✕</button>
+    </div>
+
+    <div class="stats-summary-row" id="statsSummaryRow"></div>
+
+    <div class="stats-tabs">
+      <button class="stats-tab on-stat" data-stat="all"   onclick="setStatsFilter('all')">ทั้งหมด</button>
+      <button class="stats-tab" data-stat="single-normal" onclick="setStatsFilter('single-normal')">ทีละข้อ · ปกติ</button>
+      <button class="stats-tab" data-stat="single-hard"   onclick="setStatsFilter('single-hard')">ทีละข้อ · ยาก</button>
+      <button class="stats-tab" data-stat="batch-normal"  onclick="setStatsFilter('batch-normal')">10 ข้อ · ปกติ</button>
+      <button class="stats-tab" data-stat="batch-hard"    onclick="setStatsFilter('batch-hard')">10 ข้อ · ยาก</button>
+      <button class="stats-tab" data-stat="choice-normal" onclick="setStatsFilter('choice-normal')">เลือกตอบ · ปกติ</button>
+      <button class="stats-tab" data-stat="choice-hard"   onclick="setStatsFilter('choice-hard')">เลือกตอบ · ยาก</button>
+    </div>
+
+    <div class="stats-body" id="statsBody"></div>
+
+    <div class="stats-footer">
+      <button class="stats-clear" onclick="clearStats()">🗑 ล้างสถิติทั้งหมด</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   GLOBAL STATE
+═══════════════════════════════════════ */
+let qMode = 'A';          // 'A' single | 'B' batch10
+let difficulty = 'normal'; // 'normal' | 'hard'
+let input = '';
+
+function randNum() {
+  return difficulty === 'hard'
+    ? Math.floor(Math.random()*50) + 1   // 1-50
+    : Math.floor(Math.random()*10);      // 0-9
+}
+
+function pressRaw(n) {
+  const maxLen = difficulty === 'hard' ? 3 : 2;
+  if (input.length >= maxLen) return;
+  if (input === '0') input = '';
+  input += n;
+}
+function delRaw() { input = input.slice(0, -1); }
+
+/* ═══════════════════════════════════════
+   SCORE
+═══════════════════════════════════════ */
+let totalCorrect = 0, totalWrong = 0;
+function addScore(c, w) {
+  totalCorrect += c; totalWrong += w;
+  document.getElementById('scoreCorrect').textContent = totalCorrect;
+  document.getElementById('scoreWrong').textContent   = totalWrong;
+  document.getElementById('scoreTotal').textContent   = totalCorrect + totalWrong;
+}
+function resetScore() {
+  totalCorrect = 0; totalWrong = 0;
+  addScore(0,0);
+  document.getElementById('scoreCorrect').textContent = 0;
+  document.getElementById('scoreWrong').textContent = 0;
+  document.getElementById('scoreTotal').textContent = 0;
+}
+
+/* ═══════════════════════════════════════
+   MODE SWITCH (question style)
+═══════════════════════════════════════ */
+function setQuestionMode(m) {
+  qMode = m;
+  document.querySelectorAll('#modeGroup .pill-btn').forEach(b=>b.classList.toggle('on-mode', b.dataset.mode===m));
+  document.getElementById('card').style.display       = m === 'A' ? '' : 'none';
+  document.getElementById('cardC').style.display      = m === 'C' ? '' : 'none';
+  document.getElementById('sheetWrap').classList.toggle('visible', m === 'B');
+  document.getElementById('numpad').style.display     = m === 'C' ? 'none' : '';
+  document.getElementById('controlsA').style.display  = m === 'A' ? '' : 'none';
+  document.getElementById('controlsB').style.display  = m === 'B' ? '' : 'none';
+  document.getElementById('controlsC').style.display  = m === 'C' ? '' : 'none';
+  if (m === 'A') generate();
+  else if (m === 'B') batchGenerate();
+  else choiceGenerate();
+}
+
+function setDifficulty(d) {
+  difficulty = d;
+  document.querySelectorAll('#diffGroup .pill-btn').forEach(b=>b.classList.toggle('on-diff', b.dataset.diff===d));
+  if (qMode === 'A') generate();
+  else if (qMode === 'B') batchGenerate();
+  else choiceGenerate();
+}
+
+/* ═══════════════════════════════════════
+   SINGLE MODE
+═══════════════════════════════════════ */
+let a = 0, b = 0, answered = false, streak = 0;
+
+const num1El      = document.getElementById('num1');
+const num2El      = document.getElementById('num2');
+const answerText  = document.getElementById('answerText');
+const answerPH    = document.getElementById('answerPH');
+const resultBadge = document.getElementById('resultBadge');
+const streakEl    = document.getElementById('streak');
+const cardEl      = document.getElementById('card');
+
+function generate() {
+  answered = false; input = '';
+  a = randNum(); b = randNum();
+  [num1El, num2El].forEach(el => { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); });
+  num1El.textContent = a; num2El.textContent = b;
+  answerText.textContent = ''; answerText.classList.remove('visible');
+  answerPH.style.display = '';
+  resultBadge.className = 'result-badge'; resultBadge.textContent = '';
+  cardEl.className = 'card'; streakEl.textContent = '';
+}
+
+function updateInputA() {
+  if (input === '') { answerText.classList.remove('visible'); answerPH.style.display = ''; }
+  else { answerPH.style.display='none'; answerText.textContent=input; answerText.style.color='var(--text)'; answerText.classList.add('visible'); }
+}
+
+function confirmA() {
+  if (answered || input === '') return;
+  const guess = parseInt(input,10), right = a+b;
+  answered = true;
+  if (guess === right) {
+    streak++;
+    addScore(1,0);
+    resultBadge.className='result-badge correct'; resultBadge.textContent='✓ ถูกต้อง!';
+    cardEl.className='card flash-correct'; answerText.style.color='var(--green)';
+    streakEl.textContent = streak>1 ? `🔥 ${streak} ครั้งติด!` : '';
+  } else {
+    if (streak > 0) recordSingleStreak(streak, true);
+    streak = 0;
+    addScore(0,1);
+    resultBadge.className='result-badge wrong'; resultBadge.textContent=`✗ ผิด! คำตอบคือ ${right}`;
+    cardEl.className='card flash-wrong'; answerText.style.color='var(--accent2)';
+    streakEl.textContent='';
+  }
+  answerText.textContent = guess===right ? guess : `${guess}  →  ${right}`;
+  answerText.classList.add('visible'); answerPH.style.display='none';
+
+  // In timed mode, immediately roll the next question
+  if (timerTotal > 0 && cdRunning) {
+    setTimeout(generate, 350);
+  }
+}
+
+function showAnswer() {
+  if (answered) return;
+  answered = true; streak = 0; addScore(0,1);
+  const right = a+b;
+  answerText.textContent=right; answerText.style.color='var(--accent)'; answerText.classList.add('visible');
+  answerPH.style.display='none';
+  resultBadge.className='result-badge reveal'; resultBadge.textContent='💡 เฉลย';
+  streakEl.textContent='';
+
+  if (timerTotal > 0 && cdRunning) {
+    setTimeout(generate, 350);
+  }
+}
+
+/* ═══════════════════════════════════════
+   CHOICE MODE (2-option)
+═══════════════════════════════════════ */
+let cA = 0, cB = 0, cAnswered = false, cStreak = 0, cCorrectIdx = 0;
+
+const cNum1El   = document.getElementById('cNum1');
+const cNum2El   = document.getElementById('cNum2');
+const cardCEl   = document.getElementById('cardC');
+const resultBadgeC = document.getElementById('resultBadgeC');
+const streakCEl = document.getElementById('streakC');
+const choiceBtns = [document.getElementById('choiceBtn0'), document.getElementById('choiceBtn1')];
+
+function choiceGenerate() {
+  cAnswered = false;
+  cA = randNum(); cB = randNum();
+  const right = cA + cB;
+
+  // build a plausible-but-wrong distractor close to the right answer
+  let wrong;
+  const maxVal = difficulty === 'hard' ? 100 : 18;
+  do {
+    const delta = [1,1,2,2,-1,-1,-2,-2,3,-3][Math.floor(Math.random()*10)];
+    wrong = right + delta;
+  } while (wrong === right || wrong < 0 || wrong > maxVal);
+
+  cCorrectIdx = Math.random() < 0.5 ? 0 : 1;
+  const values = cCorrectIdx === 0 ? [right, wrong] : [wrong, right];
+
+  [cNum1El, cNum2El].forEach(el => { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); });
+  cNum1El.textContent = cA; cNum2El.textContent = cB;
+
+  choiceBtns.forEach((btn, i) => {
+    btn.textContent = values[i];
+    btn.className = 'choice-btn';
+    btn.disabled = false;
+  });
+
+  resultBadgeC.className = 'result-badge'; resultBadgeC.textContent = '';
+  cardCEl.className = 'card'; streakCEl.textContent = '';
+}
+
+function choosePick(idx) {
+  if (cAnswered) return;
+  cAnswered = true;
+  const right = cA + cB;
+  const isCorrect = idx === cCorrectIdx;
+
+  choiceBtns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === cCorrectIdx) btn.classList.add('choice-correct');
+    else if (i === idx) btn.classList.add('choice-wrong');
+    else btn.classList.add('choice-dim');
+  });
+
+  if (isCorrect) {
+    cStreak++;
+    addScore(1,0);
+    resultBadgeC.className = 'result-badge correct'; resultBadgeC.textContent = '✓ ถูกต้อง!';
+    cardCEl.className = 'card flash-correct';
+    streakCEl.textContent = cStreak>1 ? `🔥 ${cStreak} ครั้งติด!` : '';
+  } else {
+    if (cStreak > 0) recordChoiceStreak(cStreak, true);
+    cStreak = 0;
+    addScore(0,1);
+    resultBadgeC.className = 'result-badge wrong'; resultBadgeC.textContent = `✗ ผิด! คำตอบคือ ${right}`;
+    cardCEl.className = 'card flash-wrong';
+    streakCEl.textContent = '';
+  }
+
+  if (timerTotal > 0 && cdRunning) {
+    setTimeout(choiceGenerate, 450);
+  }
+}
+
+function recordChoiceStreak(streakVal, ended) {
+  if (!ended || streakVal < 1) return;
+  const records = loadRecords();
+  records.push({
+    type: 'choice',
+    difficulty: difficulty,
+    streak: streakVal,
+    timed: timerTotal > 0,
+    date: new Date().toISOString()
+  });
+  saveRecords(records);
+}
+
+/* ═══════════════════════════════════════
+   BATCH-10 MODE
+═══════════════════════════════════════ */
+const BATCH = 10;
+let questions = [], answers = [], batchIdx = 0, batchDone = false;
+
+function batchGenerate() {
+  document.getElementById('summary').classList.remove('visible');
+  batchDone = false;
+  questions = Array.from({length:BATCH}, () => ({ a: randNum(), b: randNum() }));
+  answers = Array(BATCH).fill(null);
+  batchIdx = 0;
+  input = '';
+  renderSheet();
+}
+
+function renderSheet() {
+  const list = document.getElementById('sheetList');
+  list.innerHTML = '';
+  questions.forEach((q, i) => {
+    const ans = answers[i];
+    const right = q.a + q.b;
+    const done = ans !== null;
+    const ok = done && ans === right;
+
+    const row = document.createElement('div');
+    row.className = 'q-row' +
+      (i === batchIdx && !batchDone ? ' active-row' : '') +
+      (done && ok ? ' done-correct' : '') +
+      (done && !ok ? ' done-wrong' : '');
+    row.id = `qrow-${i}`;
+
+    const qn = document.createElement('div');
+    qn.className = 'q-num' + (i===batchIdx&&!batchDone?' active-num':'');
+    qn.textContent = i+1;
+
+    const eq = document.createElement('div');
+    eq.className = 'q-eq';
+    let blankClass = 'q-blank';
+    let blankVal = '?';
+    if (done) {
+      blankClass += ok ? ' correct-ans' : ' wrong-ans';
+      blankVal = ok ? ans : (ans===-1 ? right : `${ans}→${right}`);
+    } else if (i === batchIdx && !batchDone && input !== '') {
+      blankClass += ' filled';
+      blankVal = input;
+    }
+    eq.innerHTML = `${q.a} + ${q.b} = <span class="${blankClass}">${blankVal}</span>`;
+
+    const ic = document.createElement('div');
+    ic.className = 'q-icon';
+    ic.textContent = done ? (ok ? '✅' : '❌') : (i===batchIdx&&!batchDone ? '✏️' : '');
+
+    row.append(qn, eq, ic);
+    list.appendChild(row);
+  });
+
+  const doneCount = answers.filter(x=>x!==null).length;
+  const timedExtend = timerTotal > 0 && cdRunning;
+  document.getElementById('sheetCur').textContent = Math.min(batchIdx+1, questions.length);
+  document.getElementById('sheetTotal').textContent = timedExtend ? '∞' : BATCH;
+  document.getElementById('progBar').style.width = (timedExtend ? 100 : (doneCount/BATCH*100))+'%';
+  const c = answers.filter((x,i)=> x!==null && x===questions[i].a+questions[i].b).length;
+  const w = answers.filter((x,i)=> x!==null && x!==questions[i].a+questions[i].b).length;
+  document.getElementById('sheetScore').innerHTML = `✓ ${c} &nbsp; ✗ ${w}`;
+
+  const activeRow = document.getElementById(`qrow-${batchIdx}`);
+  if (activeRow) activeRow.scrollIntoView({block:'nearest', behavior:'smooth'});
+}
+
+function confirmB() {
+  if (batchDone || input === '') return;
+  const guess = parseInt(input,10);
+  const right = questions[batchIdx].a + questions[batchIdx].b;
+  answers[batchIdx] = guess;
+  addScore(guess===right?1:0, guess===right?0:1);
+  input = '';
+  advanceBatch();
+}
+
+function batchReveal() {
+  if (batchDone || answers[batchIdx] !== null) return;
+  answers[batchIdx] = -1;
+  addScore(0,1);
+  input = '';
+  advanceBatch();
+}
+
+function advanceBatch() {
+  // Timed mode: keep extending with fresh questions instead of stopping at 10
+  if (timerTotal > 0 && cdRunning) {
+    questions.push({ a: randNum(), b: randNum() });
+    answers.push(null);
+    batchIdx++;
+    renderSheet();
+    return;
+  }
+  if (batchIdx < BATCH-1) { batchIdx++; renderSheet(); }
+  else { batchDone = true; renderSheet(); showSummary('done'); }
+}
+
+function showSummary(reason) {
+  const c = answers.filter((x,i)=> x!==null && x===questions[i].a+questions[i].b).length;
+  const answeredCount = answers.filter(x=>x!==null).length;
+  const w = answeredCount - c;
+  document.getElementById('sumC').textContent = c;
+  document.getElementById('sumW').textContent = w;
+  document.getElementById('sumTitle').textContent = reason==='timeup' ? '⏰ หมดเวลา!' : '🎉 จบแล้ว!';
+  const msgs = ['ลองใหม่อีกครั้งนะ 💪','พยายามต่อไป! 🌟','ดีขึ้นเรื่อยๆ 😊','เก่งมาก! 🎯','เยี่ยมเลย! 🔥','เพอร์เฟค! ⭐️'];
+  document.getElementById('sumMsg').textContent = msgs[Math.min(Math.floor(c/2), msgs.length-1)];
+  let timeUsed = null;
+  if (timerTotal > 0) {
+    timeUsed = timerTotal - timeLeft;
+    document.getElementById('sumTime').textContent = '⏱ เวลาที่ใช้ ' + fmtMMSS(timeUsed);
+  } else {
+    document.getElementById('sumTime').textContent = '';
+  }
+  document.getElementById('summary').classList.add('visible');
+
+  recordBatchResult({
+    correct: c,
+    wrong: w,
+    total: answeredCount,
+    timed: timerTotal > 0,
+    timeUsed: timeUsed,
+    timerTotal: timerTotal,
+    extended: questions.length > BATCH
+  });
+}
+
+/* ═══════════════════════════════════════
+   UNIFIED INPUT ROUTING
+═══════════════════════════════════════ */
+function press(n) {
+  if (timerTotal > 0 && !cdRunning && timeLeft <= 0) return; // time's up, locked
+  if (qMode === 'A') { if (answered) return; pressRaw(n); updateInputA(); }
+  else if (qMode === 'B') { if (batchDone || answers[batchIdx]!==null) return; pressRaw(n); renderSheet(); }
+  // mode C ignores numpad/digit input entirely
+}
+function del() {
+  if (qMode === 'A') { if (answered) return; delRaw(); updateInputA(); }
+  else if (qMode === 'B') { if (batchDone || answers[batchIdx]!==null) return; delRaw(); renderSheet(); }
+}
+function confirm_() {
+  if (timerTotal > 0 && !cdRunning && timeLeft <= 0) return;
+  if (qMode === 'A') confirmA();
+  else if (qMode === 'B') confirmB();
+}
+
+document.addEventListener('keydown', e => {
+  if (qMode === 'C') {
+    if (e.key === 'ArrowLeft' || e.key === '1') choosePick(0);
+    else if (e.key === 'ArrowRight' || e.key === '2') choosePick(1);
+    else if (e.key === ' ') choiceGenerate();
+    return;
+  }
+  if (e.key>='0'&&e.key<='9') press(parseInt(e.key));
+  else if (e.key==='Backspace') del();
+  else if (e.key==='Enter') confirm_();
+  else if (e.key===' ') { if(qMode==='A') generate(); else batchGenerate(); }
+});
+
+/* ═══════════════════════════════════════
+   COUNTDOWN TIMER (selectable, runs whole session)
+═══════════════════════════════════════ */
+let timerTotal = 0;     // 0 = no timer
+let timeLeft   = 0;
+let cdRunning  = false;
+let cdInterval = null;
+
+const countdownWrap = document.getElementById('countdownWrap');
+const cdBar   = document.getElementById('cdBar');
+const cdTimeEl= document.getElementById('cdTime');
+const cdPlayBtn = document.getElementById('cdPlayBtn');
+const customToolbar = document.getElementById('customToolbar');
+
+function fmtMMSS(s) {
+  s = Math.max(0, Math.round(s));
+  const m = Math.floor(s/60), sec = s%60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function setTimerPreset(secs) {
+  customToolbar.classList.remove('visible');
+  document.querySelectorAll('#timeGroup .pill-btn').forEach(b=>{
+    b.classList.toggle('on-time', b.dataset.secs === String(secs));
+  });
+  configureTimer(secs);
+}
+
+function showCustomTimer() {
+  customToolbar.classList.add('visible');
+  document.querySelectorAll('#timeGroup .pill-btn').forEach(b=>b.classList.toggle('on-time', b.dataset.secs==='custom'));
+}
+
+function applyCustomTimer() {
+  const v = parseInt(document.getElementById('customSecsInput').value, 10);
+  if (!v || v < 5) return;
+  customToolbar.classList.remove('visible');
+  configureTimer(v);
+}
+
+function configureTimer(secs) {
+  cdStop();
+  timerTotal = secs;
+  timeLeft = secs;
+  if (secs === 0) {
+    countdownWrap.style.display = 'none';
+  } else {
+    countdownWrap.style.display = 'flex';
+    cdTimeEl.textContent = fmtMMSS(timeLeft);
+    cdBar.style.width = '100%';
+    cdBar.className = 'cd-bar';
+    cdTimeEl.className = 'cd-time';
+    cdPlayBtn.className = 'cd-playbtn';
+    cdPlayBtn.textContent = '▶ เริ่ม';
+  }
+}
+
+function cdToggle() {
+  if (timerTotal === 0) return;
+  if (!cdRunning) cdStart(); else cdStop();
+}
+
+function cdStart() {
+  if (timerTotal === 0) return;
+  if (timeLeft <= 0) timeLeft = timerTotal; // restart if finished
+  cdRunning = true;
+  cdPlayBtn.className = 'cd-playbtn running';
+  cdPlayBtn.textContent = '⏸ หยุด';
+  cdInterval = setInterval(() => {
+    timeLeft--;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      updateCdDisplay();
+      cdStop();
+      onTimeUp();
+      return;
+    }
+    updateCdDisplay();
+  }, 1000);
+  updateCdDisplay();
+}
+
+function cdStop() {
+  cdRunning = false;
+  clearInterval(cdInterval);
+  if (timerTotal > 0) {
+    cdPlayBtn.className = 'cd-playbtn';
+    cdPlayBtn.textContent = timeLeft<=0 ? '↺ เริ่มใหม่' : '▶ เริ่ม';
+  }
+}
+
+function updateCdDisplay() {
+  cdTimeEl.textContent = fmtMMSS(timeLeft);
+  const ratio = timeLeft / timerTotal;
+  cdBar.style.width = (ratio*100) + '%';
+  cdBar.className = 'cd-bar' + (ratio<=0.15?' danger':ratio<=0.4?' warn':'');
+  cdTimeEl.className = 'cd-time' + (ratio<=0.15?' danger':'');
+}
+
+function onTimeUp() {
+  document.getElementById('leftCol').classList.add('timeup-pulse');
+  setTimeout(()=>document.getElementById('leftCol').classList.remove('timeup-pulse'), 1300);
+  if (qMode === 'B' && !batchDone) {
+    batchDone = true;
+    renderSheet();
+    showSummary('timeup');
+  } else if (qMode === 'A' && !answered) {
+    // reveal current answer, lock further input
+    answered = true;
+    const right = a + b;
+    answerText.textContent = right;
+    answerText.style.color = 'var(--accent2)';
+    answerText.classList.add('visible');
+    answerPH.style.display = 'none';
+    resultBadge.className = 'result-badge wrong';
+    resultBadge.textContent = '⏰ หมดเวลา!';
+    if (streak > 0) recordSingleStreak(streak, true);
+    streak = 0;
+    streakEl.textContent = '';
+  } else if (qMode === 'C' && !cAnswered) {
+    cAnswered = true;
+    choiceBtns.forEach((btn, i) => {
+      btn.disabled = true;
+      if (i === cCorrectIdx) btn.classList.add('choice-correct');
+      else btn.classList.add('choice-dim');
+    });
+    resultBadgeC.className = 'result-badge wrong';
+    resultBadgeC.textContent = '⏰ หมดเวลา!';
+    if (cStreak > 0) recordChoiceStreak(cStreak, true);
+    cStreak = 0;
+    streakCEl.textContent = '';
+  }
+}
+
+/* ═══════════════════════════════════════
+   STATS / RECORDS  (persisted via localStorage)
+═══════════════════════════════════════ */
+const STATS_KEY = 'mathgame_records_v1';
+
+function loadRecords() {
+  try {
+    const raw = localStorage.getItem(STATS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+function saveRecords(records) {
+  try { localStorage.setItem(STATS_KEY, JSON.stringify(records)); } catch (e) {}
+}
+
+function recordSingleStreak(streakVal, ended) {
+  if (!ended || streakVal < 1) return;
+  const records = loadRecords();
+  records.push({
+    type: 'single',
+    difficulty: difficulty,
+    streak: streakVal,
+    timed: timerTotal > 0,
+    date: new Date().toISOString()
+  });
+  saveRecords(records);
+}
+
+function recordBatchResult(r) {
+  const records = loadRecords();
+  records.push({
+    type: 'batch',
+    difficulty: difficulty,
+    correct: r.correct,
+    wrong: r.wrong,
+    total: r.total,
+    timed: r.timed,
+    timeUsed: r.timeUsed,
+    timerTotal: r.timerTotal,
+    extended: r.extended,
+    date: new Date().toISOString()
+  });
+  saveRecords(records);
+}
+
+let statsFilter = 'all';
+
+function openStats() {
+  document.getElementById('statsOverlay').classList.add('visible');
+  renderStats();
+}
+function closeStats() {
+  document.getElementById('statsOverlay').classList.remove('visible');
+}
+function setStatsFilter(f) {
+  statsFilter = f;
+  document.querySelectorAll('.stats-tab').forEach(b => b.classList.toggle('on-stat', b.dataset.stat === f));
+  renderStats();
+}
+function clearStats() {
+  if (!confirm('ล้างสถิติทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+  saveRecords([]);
+  renderStats();
+}
+function deleteRecord(idx) {
+  const records = loadRecords();
+  records.splice(idx, 1);
+  saveRecords(records);
+  renderStats();
+}
+
+function matchesFilter(rec) {
+  if (statsFilter === 'all') return true;
+  const [type, diff] = statsFilter.split('-');
+  const typeMatch = (type === 'single' && rec.type === 'single') ||
+                     (type === 'batch'  && rec.type === 'batch')  ||
+                     (type === 'choice' && rec.type === 'choice');
+  return typeMatch && rec.difficulty === diff;
+}
+
+function diffLabel(d) { return d === 'hard' ? '🔥 ยาก' : '😊 ปกติ'; }
+function typeLabel(rec) {
+  if (rec.type === 'single') return '🎯 ทีละข้อ';
+  if (rec.type === 'choice') return '🔘 เลือกตอบ';
+  return rec.extended ? '📋 ไม่จำกัดข้อ' : '📋 10 ข้อ';
+}
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('th-TH', {day:'numeric', month:'short'}) + ' ' +
+         d.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
+}
+
+function renderStats() {
+  const records = loadRecords().filter(matchesFilter);
+  const body = document.getElementById('statsBody');
+  const summaryRow = document.getElementById('statsSummaryRow');
+
+  // summary cards
+  const allRecords = loadRecords();
+  const bestStreak = allRecords.filter(r=>r.type==='single'||r.type==='choice').reduce((m,r)=>Math.max(m,r.streak||0), 0);
+  const bestBatchAcc = allRecords.filter(r=>r.type==='batch' && r.total>0)
+    .reduce((m,r)=>Math.max(m, Math.round(r.correct/r.total*100)), 0);
+  const totalPlays = allRecords.length;
+
+  summaryRow.innerHTML = `
+    <div class="stats-sumcard"><div class="sc-label">สถิติสูงสุด ติดกัน</div><div class="sc-value gold">${bestStreak}</div></div>
+    <div class="stats-sumcard"><div class="sc-label">ความแม่นยำสูงสุด</div><div class="sc-value green">${bestBatchAcc}%</div></div>
+    <div class="stats-sumcard"><div class="sc-label">เล่นไปแล้ว</div><div class="sc-value blue">${totalPlays}</div></div>
+  `;
+
+  if (records.length === 0) {
+    body.innerHTML = '<div class="stats-empty">ยังไม่มีสถิติในหมวดนี้<br>เล่นเกมเพื่อบันทึกผลของคุณ!</div>';
+    return;
+  }
+
+  // sort newest first, but mark personal-bests
+  const withIdx = loadRecords().map((r,i)=>({...r, _origIdx:i})).filter(matchesFilter);
+  const sorted = withIdx.slice().sort((x,y)=> new Date(y.date) - new Date(x.date));
+
+  const bestStreakInFilter = Math.max(0, ...sorted.filter(r=>r.type==='single'||r.type==='choice').map(r=>r.streak||0));
+  const bestAccInFilter = Math.max(0, ...sorted.filter(r=>r.type==='batch'&&r.total>0).map(r=>Math.round(r.correct/r.total*100)));
+
+  body.innerHTML = '';
+  sorted.forEach(rec => {
+    const row = document.createElement('div');
+    let isBest = false;
+    let resultMain = '', resultSub = '';
+
+    if (rec.type === 'single' || rec.type === 'choice') {
+      isBest = rec.streak === bestStreakInFilter && bestStreakInFilter > 0;
+      resultMain = `🔥 ${rec.streak}`;
+      resultSub  = 'ครั้งติด';
+    } else {
+      const acc = rec.total > 0 ? Math.round(rec.correct/rec.total*100) : 0;
+      isBest = acc === bestAccInFilter && bestAccInFilter > 0 && rec.total >= 5;
+      resultMain = `${rec.correct}/${rec.total}`;
+      resultSub  = `${acc}%${rec.timeUsed!=null ? ' · '+fmtMMSS(rec.timeUsed) : ''}`;
+    }
+
+    row.className = 'stat-row' + (isBest ? ' is-best' : '');
+    row.innerHTML = `
+      <div class="stat-badge">${isBest ? '🏆' : (rec.type==='batch'?'📋':(rec.type==='choice'?'🔘':'🎯'))}</div>
+      <div class="stat-meta">
+        <div class="meta-main">${typeLabel(rec)} · ${diffLabel(rec.difficulty)}${rec.timed ? ' · ⏱ จับเวลา' : ''}</div>
+        <div class="meta-sub">${fmtDate(rec.date)}</div>
+      </div>
+      <div class="stat-result">
+        <div class="res-main ${isBest?'gold':'green'}">${resultMain}</div>
+        <div class="res-sub">${resultSub}</div>
+      </div>
+      <button class="stat-del" onclick="deleteRecord(${rec._origIdx})">✕</button>
+    `;
+    body.appendChild(row);
+  });
+}
+
+/* ── INIT ── */
+generate();
+</script>
+</body>
+</html>
