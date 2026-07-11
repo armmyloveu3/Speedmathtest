@@ -154,6 +154,7 @@
     display: flex; flex-direction: column;
     gap: 16px;
     box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    position: relative;
   }
 
   .stats-head {
@@ -228,6 +229,34 @@
     color: var(--accent2); font-family:'Kanit',sans-serif; font-size:12.5px; font-weight:600;
     cursor:pointer;
   }
+
+  /* in-app confirm dialog */
+  .confirm-box {
+    display: none;
+    position: absolute; inset: 0;
+    background: rgba(15,12,41,.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 28px;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 20px;
+    z-index: 200;
+    padding: 30px;
+    text-align: center;
+  }
+  .confirm-box.visible { display: flex; }
+  .confirm-text { font-size: 17px; font-weight: 600; line-height: 1.5; }
+  .confirm-text span { font-size: 13px; font-weight: 400; color: var(--muted); }
+  .confirm-actions { display: flex; gap: 12px; }
+  .confirm-btn {
+    border: none; border-radius: 14px; padding: 10px 24px;
+    font-family: 'Kanit', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: transform .08s;
+  }
+  .confirm-btn:active { transform: scale(.94); }
+  .confirm-cancel { background: var(--surface); border:1px solid rgba(255,255,255,.15); color: var(--text); }
+  .confirm-ok { background: var(--accent2); color: #3a0000; }
 
   /* ── TOOLBAR (custom timer input, hidden by default) ── */
   .toolbar {
@@ -681,7 +710,16 @@
     <div class="stats-body" id="statsBody"></div>
 
     <div class="stats-footer">
-      <button class="stats-clear" onclick="clearStats()">🗑 ล้างสถิติทั้งหมด</button>
+      <button class="stats-clear" onclick="askClearStats()">🗑 ล้างสถิติทั้งหมด</button>
+    </div>
+
+    <!-- in-app confirm dialog (replaces native confirm() which some iPad webviews block) -->
+    <div class="confirm-box" id="confirmBox">
+      <div class="confirm-text">ล้างสถิติทั้งหมด?<br><span>การกระทำนี้ไม่สามารถย้อนกลับได้</span></div>
+      <div class="confirm-actions">
+        <button class="confirm-btn confirm-cancel" onclick="hideConfirmBox()">ยกเลิก</button>
+        <button class="confirm-btn confirm-ok" onclick="doClearStats()">ล้างทั้งหมด</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1206,18 +1244,38 @@ function onTimeUp() {
 }
 
 /* ═══════════════════════════════════════
-   STATS / RECORDS  (persisted via localStorage)
+   STATS / RECORDS  (persisted via localStorage,
+   with in-memory fallback if storage is blocked —
+   e.g. some sandboxed iPad webviews / private mode / file:// access)
 ═══════════════════════════════════════ */
 const STATS_KEY = 'mathgame_records_v1';
+let storageAvailable = true;
+let memRecords = [];   // fallback store, lost on reload if storage is blocked
+
+function testStorage() {
+  try {
+    localStorage.setItem('__test__', '1');
+    localStorage.removeItem('__test__');
+    return true;
+  } catch (e) { return false; }
+}
+storageAvailable = testStorage();
 
 function loadRecords() {
+  if (!storageAvailable) return memRecords;
   try {
     const raw = localStorage.getItem(STATS_KEY);
     return raw ? JSON.parse(raw) : [];
-  } catch (e) { return []; }
+  } catch (e) { return memRecords; }
 }
 function saveRecords(records) {
-  try { localStorage.setItem(STATS_KEY, JSON.stringify(records)); } catch (e) {}
+  if (!storageAvailable) { memRecords = records; return; }
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify(records));
+  } catch (e) {
+    memRecords = records;
+    storageAvailable = false;
+  }
 }
 
 function recordSingleStreak(streakVal, ended) {
@@ -1258,15 +1316,24 @@ function openStats() {
 }
 function closeStats() {
   document.getElementById('statsOverlay').classList.remove('visible');
+  hideConfirmBox();
 }
 function setStatsFilter(f) {
   statsFilter = f;
   document.querySelectorAll('.stats-tab').forEach(b => b.classList.toggle('on-stat', b.dataset.stat === f));
   renderStats();
 }
-function clearStats() {
-  if (!confirm('ล้างสถิติทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+
+/* in-app confirm dialog (native confirm() is blocked in some iPad webviews) */
+function askClearStats() {
+  document.getElementById('confirmBox').classList.add('visible');
+}
+function hideConfirmBox() {
+  document.getElementById('confirmBox').classList.remove('visible');
+}
+function doClearStats() {
   saveRecords([]);
+  hideConfirmBox();
   renderStats();
 }
 function deleteRecord(idx) {
