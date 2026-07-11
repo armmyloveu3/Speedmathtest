@@ -117,6 +117,26 @@
   }
   .reset-btn:active { transform: scale(.93); background: rgba(255,107,107,0.22); }
 
+  /* ── ACTIVE PLAYER CHIP (header) ── */
+  .player-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 999px;
+    padding: 6px 14px 6px 10px;
+    cursor: pointer;
+    transition: background .15s, transform .08s;
+    white-space: nowrap;
+  }
+  .player-chip:active { transform: scale(.94); background: var(--surface-hi); }
+  .player-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; flex-shrink: 0;
+  }
+  .player-chip-name { font-size: 13px; font-weight: 600; max-width: 90px; overflow:hidden; text-overflow:ellipsis; }
+  .player-chip-arrow { font-size: 10px; color: var(--muted); }
+
   .stats-btn {
     border: none; border-radius: 999px;
     background: rgba(94,184,255,0.12);
@@ -229,6 +249,59 @@
     color: var(--accent2); font-family:'Kanit',sans-serif; font-size:12.5px; font-weight:600;
     cursor:pointer;
   }
+
+  /* ── PLAYER PANEL ── */
+  .player-panel {
+    background: rgba(94,184,255,.07);
+    border: 1px solid rgba(94,184,255,.18);
+    border-radius: 18px;
+    padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .player-panel-head { display:flex; align-items:center; justify-content:space-between; }
+  .player-panel-title { font-size:13px; font-weight:700; color:var(--blue); letter-spacing:.04em; }
+  .player-add-btn {
+    border:none; border-radius:999px;
+    background:rgba(94,184,255,.18); color:var(--blue);
+    font-family:'Kanit',sans-serif; font-size:12px; font-weight:600;
+    padding:4px 12px; cursor:pointer;
+  }
+  .player-list { display:flex; flex-wrap:wrap; gap:8px; }
+  .player-tag {
+    display:flex; align-items:center; gap:6px;
+    border-radius:999px; padding:5px 10px 5px 6px;
+    border:1px solid rgba(255,255,255,.12); background:var(--surface);
+    cursor:pointer; transition:background .12s, border-color .12s, transform .07s;
+  }
+  .player-tag:active { transform:scale(.94); }
+  .player-tag.active-player { border-color:var(--accent); background:rgba(247,201,72,.12); }
+  .player-tag .pt-avatar {
+    width:22px; height:22px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:800;
+  }
+  .player-tag .pt-name { font-size:12.5px; font-weight:600; max-width:80px; overflow:hidden; text-overflow:ellipsis; }
+  .player-tag .pt-del { font-size:11px; color:var(--muted); margin-left:2px; background:none; border:none; cursor:pointer; padding:0 2px; }
+  .player-tag .pt-del:active { color:var(--accent2); }
+  .player-input-row { display:flex; gap:8px; }
+  .player-input-row input {
+    flex:1; background:var(--surface); border:1px solid rgba(255,255,255,.18);
+    border-radius:10px; color:var(--text); font-family:'Kanit',sans-serif;
+    font-size:14px; padding:7px 12px;
+  }
+  .player-input-row button {
+    border:none; border-radius:10px; padding:7px 16px;
+    background:var(--blue); color:#002033;
+    font-family:'Kanit',sans-serif; font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .player-filter-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:2px; }
+  .pf-label { font-size:11px; color:var(--muted); white-space:nowrap; }
+  .pf-btn {
+    border:1px solid rgba(255,255,255,.10); border-radius:999px; padding:4px 12px;
+    background:var(--surface); font-family:'Kanit',sans-serif; font-size:12px; font-weight:600;
+    color:var(--muted); cursor:pointer;
+  }
+  .pf-btn.active-pf { background:rgba(247,201,72,.18); border-color:var(--accent); color:var(--accent); }
 
   /* in-app confirm dialog */
   .confirm-box {
@@ -573,6 +646,12 @@
 
       <button class="reset-btn" onclick="resetScore()">↺ รีเซ็ตคะแนน</button>
 
+      <div class="player-chip" onclick="openStats()" title="เปลี่ยนผู้เล่น">
+        <div class="player-avatar" id="headerAvatar" style="background:#5eb8ff22;color:var(--blue)">?</div>
+        <span class="player-chip-name" id="headerName">เลือกผู้เล่น</span>
+        <span class="player-chip-arrow">▾</span>
+      </div>
+
       <button class="stats-btn" onclick="openStats()">🏆 สถิติ</button>
 
       <div class="score-pill">
@@ -695,7 +774,23 @@
       <button class="stats-close" onclick="closeStats()">✕</button>
     </div>
 
+    <!-- PLAYER PANEL -->
+    <div class="player-panel">
+      <div class="player-panel-head">
+        <span class="player-panel-title">👤 ผู้เล่น</span>
+        <button class="player-add-btn" onclick="showAddPlayer()">+ เพิ่มผู้เล่น</button>
+      </div>
+      <div class="player-list" id="playerList"></div>
+      <div class="player-input-row" id="addPlayerRow" style="display:none">
+        <input type="text" id="newPlayerInput" placeholder="ชื่อผู้เล่น..." maxlength="20"
+               onkeydown="if(event.key==='Enter') addPlayer()">
+        <button onclick="addPlayer()">✓ เพิ่ม</button>
+      </div>
+    </div>
+
     <div class="stats-summary-row" id="statsSummaryRow"></div>
+
+    <div class="player-filter-row" id="playerFilterRow"></div>
 
     <div class="stats-tabs">
       <button class="stats-tab on-stat" data-stat="all"   onclick="setStatsFilter('all')">ทั้งหมด</button>
@@ -942,6 +1037,7 @@ function recordChoiceStreak(streakVal, ended) {
     difficulty: difficulty,
     streak: streakVal,
     timed: timerTotal > 0,
+    playerId: activePlayerId,
     date: new Date().toISOString()
   });
   saveRecords(records);
@@ -1244,6 +1340,160 @@ function onTimeUp() {
 }
 
 /* ═══════════════════════════════════════
+   PLAYER PROFILES
+═══════════════════════════════════════ */
+const PLAYERS_KEY = 'mathgame_players_v1';
+const ACTIVE_KEY  = 'mathgame_active_player_v1';
+
+// palette for avatars
+const PLAYER_COLORS = [
+  {bg:'rgba(247,201,72,.22)',  fg:'#f7c948'},
+  {bg:'rgba(67,233,123,.22)', fg:'#43e97b'},
+  {bg:'rgba(94,184,255,.22)', fg:'#5eb8ff'},
+  {bg:'rgba(192,132,252,.22)',fg:'#c084fc'},
+  {bg:'rgba(255,107,107,.22)',fg:'#ff6b6b'},
+  {bg:'rgba(251,146,60,.22)', fg:'#fb923c'},
+];
+
+function loadPlayers() {
+  try { const r = localStorage.getItem(PLAYERS_KEY); return r ? JSON.parse(r) : []; }
+  catch(e) { return []; }
+}
+function savePlayers(p) {
+  try { localStorage.setItem(PLAYERS_KEY, JSON.stringify(p)); } catch(e) {}
+}
+function getActivePlayerId() {
+  try { return localStorage.getItem(ACTIVE_KEY) || null; } catch(e) { return null; }
+}
+function setActivePlayerId(id) {
+  try { if (id) localStorage.setItem(ACTIVE_KEY, id); else localStorage.removeItem(ACTIVE_KEY); } catch(e) {}
+}
+
+let activePlayerId = null;  // null = no player selected
+let playerFilter   = null;  // null = all players
+
+function initPlayers() {
+  activePlayerId = getActivePlayerId();
+  updateHeaderChip();
+}
+
+function updateHeaderChip() {
+  const players = loadPlayers();
+  const p = players.find(x => x.id === activePlayerId);
+  const avatarEl = document.getElementById('headerAvatar');
+  const nameEl   = document.getElementById('headerName');
+  if (p) {
+    const col = PLAYER_COLORS[p.colorIdx % PLAYER_COLORS.length];
+    avatarEl.style.background = col.bg;
+    avatarEl.style.color = col.fg;
+    avatarEl.textContent = p.name.charAt(0).toUpperCase();
+    nameEl.textContent = p.name;
+  } else {
+    avatarEl.style.background = 'rgba(94,184,255,0.15)';
+    avatarEl.style.color = 'var(--blue)';
+    avatarEl.textContent = '?';
+    nameEl.textContent = 'เลือกผู้เล่น';
+  }
+}
+
+function showAddPlayer() {
+  const row = document.getElementById('addPlayerRow');
+  row.style.display = row.style.display === 'none' ? '' : 'none';
+  if (row.style.display !== 'none') document.getElementById('newPlayerInput').focus();
+}
+
+function addPlayer() {
+  const input = document.getElementById('newPlayerInput');
+  const name = input.value.trim();
+  if (!name) return;
+  const players = loadPlayers();
+  if (players.find(p => p.name.toLowerCase() === name.toLowerCase())) {
+    input.value = ''; return;
+  }
+  const id = 'p_' + Date.now();
+  players.push({ id, name, colorIdx: players.length });
+  savePlayers(players);
+  // auto-select if first player
+  if (players.length === 1) {
+    activePlayerId = id;
+    setActivePlayerId(id);
+    updateHeaderChip();
+  }
+  input.value = '';
+  document.getElementById('addPlayerRow').style.display = 'none';
+  renderPlayerPanel();
+  renderStats();
+}
+
+function selectPlayer(id) {
+  activePlayerId = id;
+  setActivePlayerId(id);
+  updateHeaderChip();
+  renderPlayerPanel();
+  renderStats();
+}
+
+function deletePlayer(id) {
+  let players = loadPlayers();
+  players = players.filter(p => p.id !== id);
+  savePlayers(players);
+  if (activePlayerId === id) {
+    activePlayerId = players[0]?.id || null;
+    setActivePlayerId(activePlayerId);
+    updateHeaderChip();
+  }
+  if (playerFilter === id) playerFilter = null;
+  renderPlayerPanel();
+  renderStats();
+}
+
+function renderPlayerPanel() {
+  const players = loadPlayers();
+  const list = document.getElementById('playerList');
+  if (players.length === 0) {
+    list.innerHTML = '<span style="font-size:12px;color:var(--muted)">ยังไม่มีผู้เล่น กด + เพิ่มผู้เล่นก่อน</span>';
+    return;
+  }
+  list.innerHTML = '';
+  players.forEach(p => {
+    const col = PLAYER_COLORS[p.colorIdx % PLAYER_COLORS.length];
+    const tag = document.createElement('div');
+    tag.className = 'player-tag' + (p.id === activePlayerId ? ' active-player' : '');
+    tag.onclick = () => selectPlayer(p.id);
+    tag.innerHTML = `
+      <div class="pt-avatar" style="background:${col.bg};color:${col.fg}">${p.name.charAt(0).toUpperCase()}</div>
+      <span class="pt-name">${p.name}</span>
+      <button class="pt-del" onclick="event.stopPropagation();deletePlayer('${p.id}')" title="ลบ">✕</button>
+    `;
+    list.appendChild(tag);
+  });
+}
+
+function renderPlayerFilter() {
+  const players = loadPlayers();
+  const row = document.getElementById('playerFilterRow');
+  if (players.length === 0) { row.innerHTML = ''; return; }
+  row.innerHTML = '<span class="pf-label">แสดงของ:</span>';
+  // "ทุกคน" button
+  const all = document.createElement('button');
+  all.className = 'pf-btn' + (!playerFilter ? ' active-pf' : '');
+  all.textContent = 'ทุกคน';
+  all.onclick = () => { playerFilter = null; renderPlayerFilter(); renderStats(); };
+  row.appendChild(all);
+  players.forEach(p => {
+    const col = PLAYER_COLORS[p.colorIdx % PLAYER_COLORS.length];
+    const btn = document.createElement('button');
+    btn.className = 'pf-btn' + (playerFilter === p.id ? ' active-pf' : '');
+    btn.style.borderColor = playerFilter === p.id ? col.fg : '';
+    btn.style.color = playerFilter === p.id ? col.fg : '';
+    btn.style.background = playerFilter === p.id ? col.bg : '';
+    btn.textContent = p.name;
+    btn.onclick = () => { playerFilter = p.id; renderPlayerFilter(); renderStats(); };
+    row.appendChild(btn);
+  });
+}
+
+/* ═══════════════════════════════════════
    STATS / RECORDS  (persisted via localStorage,
    with in-memory fallback if storage is blocked —
    e.g. some sandboxed iPad webviews / private mode / file:// access)
@@ -1286,6 +1536,7 @@ function recordSingleStreak(streakVal, ended) {
     difficulty: difficulty,
     streak: streakVal,
     timed: timerTotal > 0,
+    playerId: activePlayerId,
     date: new Date().toISOString()
   });
   saveRecords(records);
@@ -1303,6 +1554,7 @@ function recordBatchResult(r) {
     timeUsed: r.timeUsed,
     timerTotal: r.timerTotal,
     extended: r.extended,
+    playerId: activePlayerId,
     date: new Date().toISOString()
   });
   saveRecords(records);
@@ -1312,6 +1564,8 @@ let statsFilter = 'all';
 
 function openStats() {
   document.getElementById('statsOverlay').classList.add('visible');
+  renderPlayerPanel();
+  renderPlayerFilter();
   renderStats();
 }
 function closeStats() {
@@ -1326,13 +1580,27 @@ function setStatsFilter(f) {
 
 /* in-app confirm dialog (native confirm() is blocked in some iPad webviews) */
 function askClearStats() {
+  const textEl = document.querySelector('.confirm-text');
+  if (playerFilter) {
+    const players = loadPlayers();
+    const p = players.find(x => x.id === playerFilter);
+    textEl.innerHTML = `ล้างสถิติของ <b>${p ? p.name : 'ผู้เล่นนี้'}</b>?<br><span>การกระทำนี้ไม่สามารถย้อนกลับได้</span>`;
+  } else {
+    textEl.innerHTML = `ล้างสถิติทั้งหมด?<br><span>การกระทำนี้ไม่สามารถย้อนกลับได้</span>`;
+  }
   document.getElementById('confirmBox').classList.add('visible');
 }
 function hideConfirmBox() {
   document.getElementById('confirmBox').classList.remove('visible');
 }
 function doClearStats() {
-  saveRecords([]);
+  if (playerFilter) {
+    // only delete records belonging to the filtered player
+    const records = loadRecords().filter(r => r.playerId !== playerFilter);
+    saveRecords(records);
+  } else {
+    saveRecords([]);
+  }
   hideConfirmBox();
   renderStats();
 }
@@ -1364,58 +1632,73 @@ function fmtDate(iso) {
          d.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
 }
 
-function renderStats() {
-  const records = loadRecords().filter(matchesFilter);
-  const body = document.getElementById('statsBody');
-  const summaryRow = document.getElementById('statsSummaryRow');
+function matchesPlayerFilter(rec) {
+  if (!playerFilter) return true;
+  return rec.playerId === playerFilter;
+}
 
-  // summary cards
+function renderStats() {
+  const players = loadPlayers();
+  const playerMap = Object.fromEntries(players.map(p => [p.id, p]));
+
   const allRecords = loadRecords();
-  const bestStreak = allRecords.filter(r=>r.type==='single'||r.type==='choice').reduce((m,r)=>Math.max(m,r.streak||0), 0);
-  const bestBatchAcc = allRecords.filter(r=>r.type==='batch' && r.total>0)
-    .reduce((m,r)=>Math.max(m, Math.round(r.correct/r.total*100)), 0);
-  const totalPlays = allRecords.length;
+  // base pool: type filter + player filter
+  const basePool = allRecords.filter(r => matchesFilter(r) && matchesPlayerFilter(r));
+
+  const body        = document.getElementById('statsBody');
+  const summaryRow  = document.getElementById('statsSummaryRow');
+
+  // summary cards: scoped to player filter if set, else global
+  const scopedAll = playerFilter ? allRecords.filter(r => r.playerId === playerFilter) : allRecords;
+  const bestStreak    = scopedAll.filter(r=>r.type==='single'||r.type==='choice').reduce((m,r)=>Math.max(m,r.streak||0), 0);
+  const bestBatchAcc  = scopedAll.filter(r=>r.type==='batch'&&r.total>0).reduce((m,r)=>Math.max(m,Math.round(r.correct/r.total*100)), 0);
+  const totalPlays    = scopedAll.length;
+  const scopeLabel    = playerFilter && playerMap[playerFilter] ? playerMap[playerFilter].name : '';
 
   summaryRow.innerHTML = `
     <div class="stats-sumcard"><div class="sc-label">สถิติสูงสุด ติดกัน</div><div class="sc-value gold">${bestStreak}</div></div>
     <div class="stats-sumcard"><div class="sc-label">ความแม่นยำสูงสุด</div><div class="sc-value green">${bestBatchAcc}%</div></div>
-    <div class="stats-sumcard"><div class="sc-label">เล่นไปแล้ว</div><div class="sc-value blue">${totalPlays}</div></div>
+    <div class="stats-sumcard"><div class="sc-label">${scopeLabel ? scopeLabel+' เล่นไป' : 'เล่นไปแล้ว'}</div><div class="sc-value blue">${totalPlays}</div></div>
   `;
 
-  if (records.length === 0) {
+  if (basePool.length === 0) {
     body.innerHTML = '<div class="stats-empty">ยังไม่มีสถิติในหมวดนี้<br>เล่นเกมเพื่อบันทึกผลของคุณ!</div>';
     return;
   }
 
-  // sort newest first, but mark personal-bests
-  const withIdx = loadRecords().map((r,i)=>({...r, _origIdx:i})).filter(matchesFilter);
-  const sorted = withIdx.slice().sort((x,y)=> new Date(y.date) - new Date(x.date));
+  const withIdx = allRecords.map((r,i)=>({...r,_origIdx:i})).filter(r=>matchesFilter(r)&&matchesPlayerFilter(r));
+  const sorted  = withIdx.slice().sort((x,y)=>new Date(y.date)-new Date(x.date));
 
   const bestStreakInFilter = Math.max(0, ...sorted.filter(r=>r.type==='single'||r.type==='choice').map(r=>r.streak||0));
-  const bestAccInFilter = Math.max(0, ...sorted.filter(r=>r.type==='batch'&&r.total>0).map(r=>Math.round(r.correct/r.total*100)));
+  const bestAccInFilter    = Math.max(0, ...sorted.filter(r=>r.type==='batch'&&r.total>0).map(r=>Math.round(r.correct/r.total*100)));
 
   body.innerHTML = '';
   sorted.forEach(rec => {
-    const row = document.createElement('div');
-    let isBest = false;
-    let resultMain = '', resultSub = '';
+    const p   = rec.playerId ? playerMap[rec.playerId] : null;
+    const col = p ? PLAYER_COLORS[p.colorIdx % PLAYER_COLORS.length] : null;
+    let isBest = false, resultMain = '', resultSub = '';
 
     if (rec.type === 'single' || rec.type === 'choice') {
-      isBest = rec.streak === bestStreakInFilter && bestStreakInFilter > 0;
-      resultMain = `🔥 ${rec.streak}`;
-      resultSub  = 'ครั้งติด';
+      isBest      = rec.streak === bestStreakInFilter && bestStreakInFilter > 0;
+      resultMain  = `🔥 ${rec.streak}`;
+      resultSub   = 'ครั้งติด';
     } else {
-      const acc = rec.total > 0 ? Math.round(rec.correct/rec.total*100) : 0;
-      isBest = acc === bestAccInFilter && bestAccInFilter > 0 && rec.total >= 5;
-      resultMain = `${rec.correct}/${rec.total}`;
-      resultSub  = `${acc}%${rec.timeUsed!=null ? ' · '+fmtMMSS(rec.timeUsed) : ''}`;
+      const acc   = rec.total > 0 ? Math.round(rec.correct/rec.total*100) : 0;
+      isBest      = acc === bestAccInFilter && bestAccInFilter > 0 && rec.total >= 5;
+      resultMain  = `${rec.correct}/${rec.total}`;
+      resultSub   = `${acc}%${rec.timeUsed!=null?' · '+fmtMMSS(rec.timeUsed):''}`;
     }
 
+    const playerBadge = p
+      ? `<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:${col.bg};color:${col.fg};margin-left:4px">${p.name}</span>`
+      : '';
+
+    const row = document.createElement('div');
     row.className = 'stat-row' + (isBest ? ' is-best' : '');
     row.innerHTML = `
       <div class="stat-badge">${isBest ? '🏆' : (rec.type==='batch'?'📋':(rec.type==='choice'?'🔘':'🎯'))}</div>
       <div class="stat-meta">
-        <div class="meta-main">${typeLabel(rec)} · ${diffLabel(rec.difficulty)}${rec.timed ? ' · ⏱ จับเวลา' : ''}</div>
+        <div class="meta-main">${typeLabel(rec)} · ${diffLabel(rec.difficulty)}${rec.timed?' · ⏱':''} ${playerBadge}</div>
         <div class="meta-sub">${fmtDate(rec.date)}</div>
       </div>
       <div class="stat-result">
@@ -1429,6 +1712,7 @@ function renderStats() {
 }
 
 /* ── INIT ── */
+initPlayers();
 generate();
 </script>
 </body>
