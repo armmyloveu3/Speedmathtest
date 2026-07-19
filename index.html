@@ -5,682 +5,836 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="บวกเลขเร็ว">
-<title>เกมบวกเลขเร็ว</title>
+<meta name="apple-mobile-web-app-title" content="คณิตเร็ว">
+<title>คณิตเร็ว ⚡</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800;900&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --surface: rgba(255,255,255,0.06);
-    --surface-hi: rgba(255,255,255,0.11);
-    --accent: #f7c948;
-    --accent2: #ff6b6b;
-    --green: #43e97b;
-    --blue: #5eb8ff;
-    --purple: #c084fc;
-    --text: #ffffff;
-    --muted: rgba(255,255,255,0.42);
-    --r: 22px;
+    --bg1: #09081a;
+    --bg2: #14102e;
+    --bg3: #1e1840;
+    --surface: rgba(255,255,255,0.055);
+    --surface-hi: rgba(255,255,255,0.10);
+    --border: rgba(255,255,255,0.09);
+    --accent: #fbbf24;
+    --accent-glow: rgba(251,191,36,0.35);
+    --red: #f87171;
+    --red-glow: rgba(248,113,113,0.3);
+    --green: #34d399;
+    --green-glow: rgba(52,211,153,0.3);
+    --blue: #60a5fa;
+    --purple: #a78bfa;
+    --text: #f1f0ff;
+    --muted: rgba(241,240,255,0.38);
+    --r: 20px;
   }
 
   html, body {
     width: 100%; height: 100%;
     overflow: hidden;
-    background: linear-gradient(135deg, #0f0c29 0%, #302b63 55%, #24243e 100%);
-    font-family: 'Kanit', Arial, sans-serif;
+    background: var(--bg1);
+    font-family: 'Kanit', sans-serif;
     color: var(--text);
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
 
+  /* animated bg */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(139,92,246,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 80%, rgba(59,130,246,0.14) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(251,191,36,0.06) 0%, transparent 70%),
+      linear-gradient(160deg, #09081a 0%, #14102e 50%, #0d1526 100%);
+    pointer-events: none;
+  }
+
   /* ═══════ LAYOUT ═══════ */
   .app {
+    position: relative; z-index: 1;
     width: 100dvw; height: 100dvh;
     display: grid;
-    grid-template-columns: 1fr 340px;
-    grid-template-rows: auto auto 1fr;
-    grid-template-areas: "header header" "toolbar toolbar" "left right";
+    grid-template-columns: 1fr 320px;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "topbar topbar" "left right";
     padding:
-      env(safe-area-inset-top,14px)
-      env(safe-area-inset-right,22px)
-      env(safe-area-inset-bottom,14px)
-      env(safe-area-inset-left,22px);
-    gap: 0 18px;
+      env(safe-area-inset-top,12px)
+      env(safe-area-inset-right,20px)
+      env(safe-area-inset-bottom,12px)
+      env(safe-area-inset-left,20px);
+    gap: 0 16px;
   }
 
-  /* ── HEADER ── */
-  header {
-    grid-area: header;
+  /* ════════════════════════
+     TOP BAR
+  ════════════════════════ */
+  .topbar {
+    grid-area: topbar;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding-bottom: 8px;
-    flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
+    padding-bottom: 10px;
   }
-  .title { font-size: clamp(18px,2.2vw,26px); font-weight: 800; white-space:nowrap; }
-  .title span { color: var(--accent); }
 
-  .header-controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .title {
+    font-size: clamp(17px,2vw,22px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    background: linear-gradient(135deg, #fff 0%, #c4b5fd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-right: 4px;
+  }
+  .title em { -webkit-text-fill-color: var(--accent); font-style:normal; }
 
+  /* score bar */
+  .scorebar {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 14px;
+  }
+  .sc-block { display:flex; flex-direction:column; align-items:center; min-width: 32px; }
+  .sc-label { font-size: 8px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; }
+  .sc-val { font-size: 16px; font-weight: 800; line-height:1; }
+  .sc-val.g { color: var(--green); }
+  .sc-val.r { color: var(--red); }
+  .sc-sep { width: 1px; height: 22px; background: rgba(255,255,255,.10); }
+
+  /* settings toggle */
+  .settings-toggle {
+    border: none; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); font-size: 15px;
+    width: 36px; height: 36px;
+    cursor: pointer; flex-shrink: 0;
+    transition: background .15s, transform .08s;
+    display: flex; align-items:center; justify-content:center;
+  }
+  .settings-toggle:active { transform: scale(.9); }
+  .settings-toggle.open { background: rgba(167,139,250,.2); border-color: var(--purple); color: var(--purple); }
+
+  /* player chip */
+  .player-chip {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; padding: 5px 12px 5px 7px;
+    cursor: pointer; transition: background .15s, transform .08s;
+    white-space: nowrap; flex-shrink:0;
+  }
+  .player-chip:active { transform: scale(.94); }
+  .player-avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 12px; font-weight: 800;
+  }
+  .player-chip-name { font-size: 12.5px; font-weight: 600; max-width:80px; overflow:hidden; text-overflow:ellipsis; }
+
+  .icon-btn {
+    border: none; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); font-size: 16px;
+    width: 36px; height: 36px;
+    cursor: pointer; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    transition: background .15s, transform .08s;
+  }
+  .icon-btn:active { transform: scale(.9); }
+
+  .topbar-right { display:flex; align-items:center; gap:8px; margin-left:auto; }
+
+  /* ════════════════════════
+     SETTINGS DRAWER
+  ════════════════════════ */
+  .settings-drawer {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, rgba(14,11,32,0.98) 0%, rgba(18,14,40,0.96) 100%);
+    border-bottom: 1px solid rgba(167,139,250,.2);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    padding: env(safe-area-inset-top,16px) 20px 18px;
+    z-index: 50;
+    transform: translateY(-110%);
+    transition: transform .3s cubic-bezier(.32,1.2,.6,1);
+    box-shadow: 0 8px 40px rgba(0,0,0,.5);
+  }
+  .settings-drawer.open { transform: translateY(0); }
+
+  .drawer-title {
+    font-size: 11px; font-weight:700; color:var(--purple);
+    text-transform:uppercase; letter-spacing:.12em;
+    padding-bottom: 12px;
+  }
+
+  .drawer-row {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 8px 12px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255,255,255,.06);
+  }
+  .drawer-row:first-of-type { border-top: none; }
+
+  .drawer-label {
+    font-size: 11px; font-weight:700; color:var(--muted);
+    text-transform:uppercase; letter-spacing:.08em;
+    min-width: 56px;
+  }
+
+  /* pill group */
   .pillgroup {
     display: flex;
-    background: var(--surface);
-    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
     border-radius: 999px;
-    padding: 4px;
-    gap: 4px;
+    padding: 3px;
+    gap: 3px;
   }
   .pill-btn {
-    border: none;
-    border-radius: 999px;
-    padding: 6px 16px;
+    border: none; border-radius: 999px;
+    padding: 5px 13px;
     font-family: 'Kanit', sans-serif;
-    font-size: 12.5px; font-weight: 600;
+    font-size: 12px; font-weight: 700;
     color: var(--muted);
     background: transparent;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
+    transition: background .18s, color .18s, transform .07s;
     white-space: nowrap;
   }
-  .pill-btn.on-mode { background: var(--accent); color: #3a2e00; }
-  .pill-btn.on-diff { background: var(--purple); color: #1a0a2e; }
-  .pill-btn.on-time { background: var(--blue); color: #002033; }
+  .pill-btn:active { transform: scale(.93); }
+  .pill-btn.on-mode { background: var(--accent); color: #3a2600; box-shadow: 0 0 10px var(--accent-glow); }
+  .pill-btn.on-diff { background: var(--purple); color: #1a0a2e; box-shadow: 0 0 10px rgba(167,139,250,.35); }
+  .pill-btn.on-op   { background: var(--green);  color: #032e1a; box-shadow: 0 0 10px var(--green-glow); }
+  .pill-btn.on-time { background: var(--blue);   color: #001433; box-shadow: 0 0 10px rgba(96,165,250,.35); }
 
-  .score-pill {
-    background: var(--surface);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 999px;
-    padding: 6px 16px;
-    display: flex; gap: 16px;
-    align-items: center;
+  .drawer-actions {
+    display:flex; gap:8px; flex-wrap:wrap;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,.06);
   }
-  .score-item { display: flex; flex-direction: column; align-items: center; }
-  .score-label { font-size: 8.5px; font-weight: 400; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
-  .score-value { font-size: 17px; font-weight: 700; line-height: 1; }
-  .score-value.green { color: var(--green); }
-  .score-value.red   { color: var(--accent2); }
-
-  .reset-btn {
-    border: none; border-radius: 999px;
-    background: rgba(255,107,107,0.12);
-    border: 1px solid rgba(255,107,107,0.28);
-    color: var(--accent2);
-    font-family: 'Kanit', sans-serif;
-    font-size: 12.5px; font-weight: 600;
+  .drawer-action-btn {
+    border: none; border-radius: 12px;
     padding: 8px 16px;
+    font-family: 'Kanit', sans-serif; font-size: 12.5px; font-weight: 700;
     cursor: pointer;
-    white-space: nowrap;
-    transition: transform .08s, background .15s;
+    transition: transform .08s, opacity .1s;
   }
-  .reset-btn:active { transform: scale(.93); background: rgba(255,107,107,0.22); }
+  .drawer-action-btn:active { transform: scale(.94); opacity:.85; }
+  .da-reset  { background: rgba(248,113,113,.15); border:1px solid rgba(248,113,113,.3); color:var(--red); }
+  .da-custom { background: rgba(96,165,250,.15);  border:1px solid rgba(96,165,250,.3);  color:var(--blue); }
 
-  /* ── ACTIVE PLAYER CHIP (header) ── */
-  .player-chip {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--surface);
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 999px;
-    padding: 6px 14px 6px 10px;
-    cursor: pointer;
-    transition: background .15s, transform .08s;
-    white-space: nowrap;
+  /* custom time input row */
+  .custom-time-row {
+    display: none; align-items:center; gap:8px;
+    padding-top: 8px;
   }
-  .player-chip:active { transform: scale(.94); background: var(--surface-hi); }
-  .player-avatar {
-    width: 26px; height: 26px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 800; flex-shrink: 0;
+  .custom-time-row.visible { display:flex; }
+  .custom-time-row input {
+    width: 66px;
+    background: var(--surface); border:1px solid rgba(255,255,255,.18);
+    border-radius:10px; color:var(--text);
+    font-family:'Kanit',sans-serif; font-size:14px;
+    padding: 6px 10px; text-align:center;
   }
-  .player-chip-name { font-size: 13px; font-weight: 600; max-width: 90px; overflow:hidden; text-overflow:ellipsis; }
-  .player-chip-arrow { font-size: 10px; color: var(--muted); }
+  .custom-time-row label { font-size:12px; color:var(--muted); }
+  .custom-time-row button {
+    border:none; border-radius:10px; padding:7px 14px;
+    background:var(--blue); color:#001433;
+    font-family:'Kanit',sans-serif; font-size:12.5px; font-weight:700; cursor:pointer;
+  }
 
-  .stats-btn {
-    border: none; border-radius: 999px;
-    background: rgba(94,184,255,0.12);
-    border: 1px solid rgba(94,184,255,0.28);
-    color: var(--blue);
-    font-family: 'Kanit', sans-serif;
-    font-size: 12.5px; font-weight: 600;
-    padding: 8px 16px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: transform .08s, background .15s;
-  }
-  .stats-btn:active { transform: scale(.93); background: rgba(94,184,255,0.22); }
-
-  /* ── STATS MODAL ── */
-  .stats-overlay {
+  /* overlay backdrop when drawer open */
+  .drawer-backdrop {
     display: none;
-    position: fixed; inset: 0;
-    background: rgba(10,8,25,.78);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    align-items: center; justify-content: center;
-    z-index: 100;
-    padding: 24px;
+    position: fixed; inset: 0; z-index: 49;
+    background: rgba(0,0,0,.4);
   }
-  .stats-overlay.visible { display: flex; }
+  .drawer-backdrop.visible { display:block; }
 
-  .stats-modal {
-    width: 100%; max-width: 640px;
-    max-height: 86vh;
-    background: linear-gradient(160deg, #211c44, #2c2657);
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 28px;
-    padding: 26px 28px;
-    display: flex; flex-direction: column;
-    gap: 16px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.4);
-    position: relative;
-  }
-
-  .stats-head {
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .stats-title { font-size: 22px; font-weight: 800; }
-  .stats-title span { color: var(--blue); }
-  .stats-close {
-    border:none; background: var(--surface); color: var(--text);
-    width: 34px; height: 34px; border-radius: 50%;
-    font-size: 16px; cursor:pointer;
-  }
-
-  .stats-tabs { display:flex; gap:6px; flex-wrap:wrap; }
-  .stats-tab {
-    border:none; border-radius: 999px; padding: 6px 14px;
-    background: var(--surface); color: var(--muted);
-    font-family:'Kanit',sans-serif; font-size:12px; font-weight:600;
-    cursor:pointer; white-space:nowrap;
-  }
-  .stats-tab.on-stat { background: var(--blue); color:#002033; }
-
-  .stats-body { overflow-y: auto; flex:1; display:flex; flex-direction:column; gap:10px; }
-  .stats-body::-webkit-scrollbar { width:4px; }
-  .stats-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius:4px; }
-
-  .stats-empty { color: var(--muted); font-size: 14px; text-align:center; padding: 30px 0; }
-
-  /* summary cards row */
-  .stats-summary-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-  .stats-sumcard {
-    background: var(--surface); border:1px solid rgba(255,255,255,.08);
-    border-radius:16px; padding:12px 10px; text-align:center;
-  }
-  .stats-sumcard .sc-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
-  .stats-sumcard .sc-value { font-size:24px; font-weight:800; margin-top:2px; }
-  .stats-sumcard .sc-value.green { color:var(--green); }
-  .stats-sumcard .sc-value.blue  { color:var(--blue); }
-  .stats-sumcard .sc-value.gold  { color:var(--accent); }
-
-  /* record row */
-  .stat-row {
-    display: grid;
-    grid-template-columns: auto 1fr auto auto;
-    align-items: center;
-    gap: 12px;
+  /* ════════════════════════
+     COUNTDOWN BAR
+  ════════════════════════ */
+  .cd-wrap {
+    width: 100%; max-width: 540px;
     background: var(--surface);
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 14px;
-    padding: 10px 16px;
-  }
-  .stat-row.is-best { border-color: rgba(247,201,72,.45); background: rgba(247,201,72,.06); }
-  .stat-badge { font-size: 18px; }
-  .stat-meta { display:flex; flex-direction:column; gap:2px; }
-  .stat-meta .meta-main { font-size: 14px; font-weight:700; }
-  .stat-meta .meta-sub  { font-size: 11px; color: var(--muted); }
-  .stat-result { text-align:right; }
-  .stat-result .res-main { font-size:16px; font-weight:800; }
-  .stat-result .res-main.green { color: var(--green); }
-  .stat-result .res-main.gold  { color: var(--accent); }
-  .stat-result .res-sub  { font-size:10px; color: var(--muted); }
-  .stat-del {
-    border:none; background:transparent; color: var(--muted);
-    font-size: 16px; cursor:pointer; padding:4px;
-  }
-  .stat-del:active { color: var(--accent2); }
-
-  .stats-footer { display:flex; justify-content:flex-end; }
-  .stats-clear {
-    border:none; border-radius:12px; padding:8px 18px;
-    background: rgba(255,107,107,.12); border:1px solid rgba(255,107,107,.28);
-    color: var(--accent2); font-family:'Kanit',sans-serif; font-size:12.5px; font-weight:600;
-    cursor:pointer;
-  }
-
-  /* ── PLAYER PANEL ── */
-  .player-panel {
-    background: rgba(94,184,255,.07);
-    border: 1px solid rgba(94,184,255,.18);
+    border: 1px solid var(--border);
     border-radius: 18px;
-    padding: 14px 16px;
-    display: flex; flex-direction: column; gap: 10px;
-  }
-  .player-panel-head { display:flex; align-items:center; justify-content:space-between; }
-  .player-panel-title { font-size:13px; font-weight:700; color:var(--blue); letter-spacing:.04em; }
-  .player-add-btn {
-    border:none; border-radius:999px;
-    background:rgba(94,184,255,.18); color:var(--blue);
-    font-family:'Kanit',sans-serif; font-size:12px; font-weight:600;
-    padding:4px 12px; cursor:pointer;
-  }
-  .player-list { display:flex; flex-wrap:wrap; gap:8px; }
-  .player-tag {
-    display:flex; align-items:center; gap:6px;
-    border-radius:999px; padding:5px 10px 5px 6px;
-    border:1px solid rgba(255,255,255,.12); background:var(--surface);
-    cursor:pointer; transition:background .12s, border-color .12s, transform .07s;
-  }
-  .player-tag:active { transform:scale(.94); }
-  .player-tag.active-player { border-color:var(--accent); background:rgba(247,201,72,.12); }
-  .player-tag .pt-avatar {
-    width:22px; height:22px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    font-size:11px; font-weight:800;
-  }
-  .player-tag .pt-name { font-size:12.5px; font-weight:600; max-width:80px; overflow:hidden; text-overflow:ellipsis; }
-  .player-tag .pt-del { font-size:11px; color:var(--muted); margin-left:2px; background:none; border:none; cursor:pointer; padding:0 2px; }
-  .player-tag .pt-del:active { color:var(--accent2); }
-  .player-input-row { display:flex; gap:8px; }
-  .player-input-row input {
-    flex:1; background:var(--surface); border:1px solid rgba(255,255,255,.18);
-    border-radius:10px; color:var(--text); font-family:'Kanit',sans-serif;
-    font-size:14px; padding:7px 12px;
-  }
-  .player-input-row button {
-    border:none; border-radius:10px; padding:7px 16px;
-    background:var(--blue); color:#002033;
-    font-family:'Kanit',sans-serif; font-size:13px; font-weight:600; cursor:pointer;
-  }
-  .player-filter-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:2px; }
-  .pf-label { font-size:11px; color:var(--muted); white-space:nowrap; }
-  .pf-btn {
-    border:1px solid rgba(255,255,255,.10); border-radius:999px; padding:4px 12px;
-    background:var(--surface); font-family:'Kanit',sans-serif; font-size:12px; font-weight:600;
-    color:var(--muted); cursor:pointer;
-  }
-  .pf-btn.active-pf { background:rgba(247,201,72,.18); border-color:var(--accent); color:var(--accent); }
-
-  /* in-app confirm dialog */
-  .confirm-box {
+    padding: 10px 18px;
     display: none;
-    position: absolute; inset: 0;
-    background: rgba(15,12,41,.92);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-radius: 28px;
-    flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 20px;
-    z-index: 200;
-    padding: 30px;
-    text-align: center;
+    align-items: center; gap: 12px;
   }
-  .confirm-box.visible { display: flex; }
-  .confirm-text { font-size: 17px; font-weight: 600; line-height: 1.5; }
-  .confirm-text span { font-size: 13px; font-weight: 400; color: var(--muted); }
-  .confirm-actions { display: flex; gap: 12px; }
-  .confirm-btn {
-    border: none; border-radius: 14px; padding: 10px 24px;
-    font-family: 'Kanit', sans-serif; font-size: 14px; font-weight: 600;
-    cursor: pointer; transition: transform .08s;
-  }
-  .confirm-btn:active { transform: scale(.94); }
-  .confirm-cancel { background: var(--surface); border:1px solid rgba(255,255,255,.15); color: var(--text); }
-  .confirm-ok { background: var(--accent2); color: #3a0000; }
+  .cd-wrap.show { display: flex; }
 
-  /* ── TOOLBAR (custom timer input, hidden by default) ── */
-  .toolbar {
-    grid-area: toolbar;
-    display: none;
-    align-items: center;
-    gap: 10px;
-    padding-bottom: 8px;
+  .cd-label { font-size: 10px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; white-space:nowrap; }
+  .cd-bar-wrap { flex:1; height: 6px; background:rgba(255,255,255,.07); border-radius:99px; overflow:hidden; }
+  .cd-bar {
+    height:100%; width:100%;
+    background: linear-gradient(90deg, var(--green), var(--accent));
+    border-radius:99px;
+    transition: width 1s linear, background .4s;
   }
-  .toolbar.visible { display: flex; }
-  .toolbar input[type=number] {
-    width: 70px;
-    background: var(--surface);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: 'Kanit', sans-serif;
-    font-size: 15px;
-    padding: 6px 10px;
-    text-align: center;
+  .cd-bar.warn   { background: linear-gradient(90deg, var(--accent), var(--red)); }
+  .cd-bar.danger { background: var(--red); }
+  .cd-time {
+    font-size: 22px; font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    min-width: 58px; text-align:right;
+    transition: color .3s;
   }
-  .toolbar label { font-size: 13px; color: var(--muted); }
-  .toolbar button {
-    border: none; border-radius: 10px;
-    background: var(--blue); color: #002033;
-    font-family: 'Kanit', sans-serif; font-weight: 600; font-size: 13px;
-    padding: 7px 16px; cursor: pointer;
+  .cd-time.danger { color: var(--red); }
+  .cd-playbtn {
+    border: none; border-radius: 12px; padding: 8px 16px;
+    font-family:'Kanit',sans-serif; font-weight:700; font-size:13px;
+    cursor:pointer; white-space:nowrap;
+    background: var(--green); color:#032e1a;
+    transition: background .15s, transform .08s;
+    box-shadow: 0 0 14px var(--green-glow);
   }
+  .cd-playbtn:active { transform: scale(.93); }
+  .cd-playbtn.running { background: var(--red); color:#3a0000; box-shadow: 0 0 14px var(--red-glow); }
 
-  /* ── LEFT ── */
+  /* ════════════════════════
+     LEFT PANEL
+  ════════════════════════ */
   .left {
     grid-area: left;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    gap: 12px;
-    min-height: 0;
+    gap: 14px; min-height: 0;
   }
 
-  /* ── COUNTDOWN BAR (top of left, shows during play) ── */
-  .countdown-wrap {
-    width: 100%; max-width: 560px;
-    display: flex; align-items: center; gap: 12px;
-    background: var(--surface);
-    border: 1px solid rgba(255,255,255,.10);
-    border-radius: 16px;
-    padding: 8px 18px;
-  }
-  .cd-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; white-space: nowrap; }
-  .cd-bar-wrap { flex:1; height: 8px; background: rgba(255,255,255,.08); border-radius: 99px; overflow:hidden; }
-  .cd-bar { height:100%; width:100%; background: linear-gradient(90deg, var(--green), var(--accent)); border-radius:99px; transition: width 1s linear, background 0.4s; }
-  .cd-bar.warn { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
-  .cd-bar.danger { background: var(--accent2); }
-  .cd-time { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 52px; text-align:right; transition: color .3s; }
-  .cd-time.danger { color: var(--accent2); }
-  .cd-playbtn {
-    border:none; border-radius: 10px; padding: 6px 14px;
-    font-family:'Kanit',sans-serif; font-weight:600; font-size:13px;
-    cursor:pointer; white-space:nowrap;
-    background: var(--green); color:#0a2e18;
-  }
-  .cd-playbtn.running { background: var(--accent2); color:#3a0000; }
-
-  /* ════════════════════════════════
-     SINGLE-QUESTION CARD
-  ════════════════════════════════ */
+  /* ════════════════════════
+     QUESTION CARD
+  ════════════════════════ */
   .card {
-    width: 100%; max-width: 520px;
-    background: var(--surface);
-    border: 1px solid rgba(255,255,255,0.10);
+    width: 100%; max-width: 500px;
+    background: linear-gradient(145deg, rgba(255,255,255,.07) 0%, rgba(255,255,255,.03) 100%);
+    border: 1px solid rgba(255,255,255,.11);
     border-radius: 32px;
-    padding: 22px 40px 18px;
+    padding: clamp(20px,3vh,34px) 36px clamp(16px,2.5vh,26px);
     display: flex; flex-direction: column;
     align-items: center; gap: 10px;
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    position: relative; overflow: hidden;
-  }
-  .card::before {
-    content: ''; position: absolute; inset: 0;
-    background: radial-gradient(ellipse at 50% -10%, rgba(247,201,72,0.09) 0%, transparent 65%);
-    pointer-events: none;
-  }
-  .equation { display: flex; align-items: center; gap: clamp(16px,2.6vw,38px); }
-  .num {
-    font-size: clamp(58px,8.6vw,104px);
-    font-weight: 800; line-height: 1;
-    min-width: 1.6ch; text-align: center;
-  }
-  .num.pop { animation: pop .22s ease; }
-  @keyframes pop {
-    0%  { transform: scale(.65); opacity:0; }
-    70% { transform: scale(1.08); }
-    100%{ transform: scale(1);   opacity:1; }
-  }
-  .op { font-size: clamp(36px,5.2vw,62px); font-weight: 300; color: var(--accent); line-height:1; }
-  .divider { width:75%; height:2px; background:rgba(255,255,255,.08); border-radius:2px; }
-  .answer-zone { min-height: clamp(46px,6vw,66px); display:flex; align-items:center; justify-content:center; }
-  .answer-text {
-    font-size: clamp(40px,6vw,62px); font-weight:800; color:var(--accent);
-    opacity:0; transform:translateY(6px);
-    transition: opacity .28s, transform .28s, color .25s;
-  }
-  .answer-text.visible { opacity:1; transform:translateY(0); }
-  .answer-placeholder { font-size: clamp(20px,2.6vw,28px); font-weight:300; color:var(--muted); letter-spacing:.08em; }
-  .result-badge {
-    font-size:13px; font-weight:600; padding:5px 16px;
-    border-radius:999px; opacity:0; transition:opacity .4s; min-height:26px;
-  }
-  .result-badge.correct { background:rgba(67,233,123,.18); color:var(--green); opacity:1; }
-  .result-badge.wrong   { background:rgba(255,107,107,.18); color:var(--accent2); opacity:1; }
-  .result-badge.reveal  { background:rgba(247,201,72,.15);  color:var(--accent);  opacity:1; }
-  .streak { font-size:12px; font-weight:600; color:var(--accent); letter-spacing:.06em; min-height:16px; }
-
-  @keyframes flashGreen { 0%,100%{box-shadow:none} 40%{box-shadow:0 0 0 5px rgba(67,233,123,.4)} }
-  @keyframes flashRed   { 0%,100%{box-shadow:none} 40%{box-shadow:0 0 0 5px rgba(255,107,107,.4)} }
-  .card.flash-correct { animation: flashGreen .5s ease; }
-  .card.flash-wrong   { animation: flashRed   .5s ease; }
-
-  /* ════════════════════════════════
-     CHOICE MODE (2-option)
-  ════════════════════════════════ */
-  .choice-row {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-top: 6px;
-  }
-  .choice-btn {
-    border: 1px solid rgba(255,255,255,.14);
-    border-radius: 22px;
-    background: var(--surface);
-    color: var(--text);
-    font-family: 'Kanit', sans-serif;
-    font-size: clamp(36px, 6.5vw, 58px);
-    font-weight: 800;
-    padding: clamp(20px, 3.5vh, 34px) 0;
-    cursor: pointer;
-    transition: transform .08s, background .15s, border-color .15s;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  .choice-btn:active { transform: scale(.95); }
-  .choice-btn:disabled { cursor: default; }
-  .choice-btn.choice-correct {
-    background: rgba(67,233,123,.18);
-    border-color: var(--green);
-    color: var(--green);
-  }
-  .choice-btn.choice-wrong {
-    background: rgba(255,107,107,.18);
-    border-color: var(--accent2);
-    color: var(--accent2);
-  }
-  .choice-btn.choice-dim { opacity: .35; }
-
-  /* ════════════════════════════════
-     10-QUESTION SHEET
-  ════════════════════════════════ */
-  .sheet-wrap {
-    width: 100%; max-width: 560px;
-    display: none;
-    flex-direction: column;
-    gap: 8px;
-    min-height: 0;
-    flex: 1;
-    position: relative;
-  }
-  .sheet-wrap.visible { display: flex; }
-
-  .sheet-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 4px;
-  }
-  .sheet-progress { font-size: 12.5px; font-weight: 600; color: var(--muted); white-space:nowrap; }
-  .sheet-progress span { color: var(--text); }
-  .prog-bar-wrap { flex: 1; height: 6px; background: rgba(255,255,255,.08); border-radius: 99px; margin: 0 14px; overflow: hidden; }
-  .prog-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--green), var(--accent)); border-radius: 99px; transition: width .35s ease; }
-
-  .sheet-list { flex: 1; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; padding-right: 4px; }
-  .sheet-list::-webkit-scrollbar { width: 4px; }
-  .sheet-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius:4px; }
-
-  .q-row {
-    display: grid;
-    grid-template-columns: 26px 1fr auto;
-    align-items: center;
-    gap: 10px;
-    background: var(--surface);
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 13px;
-    padding: 7px 14px;
-    transition: border-color .2s, background .2s;
-  }
-  .q-row.active-row { border-color: rgba(247,201,72,.5); background: rgba(247,201,72,.06); }
-  .q-row.done-correct { border-color: rgba(67,233,123,.35); background: rgba(67,233,123,.06); }
-  .q-row.done-wrong   { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.06); }
-
-  .q-num { font-size:12.5px; font-weight:700; color:var(--muted); text-align:right; }
-  .q-num.active-num { color: var(--accent); }
-
-  .q-eq { font-size: clamp(16px,2.1vw,22px); font-weight:700; }
-  .q-eq .q-blank {
-    display: inline-block; min-width: 34px;
-    border-bottom: 2px solid rgba(255,255,255,.25);
-    text-align: center; margin-left: 6px;
-    color: var(--muted); font-weight:400;
-  }
-  .q-eq .q-blank.filled { color: var(--text); border-color: var(--accent); }
-  .q-eq .q-blank.correct-ans { color: var(--green); border-color: var(--green); }
-  .q-eq .q-blank.wrong-ans   { color: var(--accent2); border-color: var(--accent2); }
-
-  .q-icon { font-size: 17px; min-width: 20px; text-align:center; }
-
-  /* summary overlay */
-  .summary {
-    display: none;
-    position: absolute; inset: 0;
-    background: rgba(15,12,41,.94);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 14px;
-    z-index: 10;
-    border-radius: 24px;
+    position: relative; overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.04) inset,
+                0 20px 50px rgba(0,0,0,.35);
   }
-  .summary.visible { display: flex; }
-  .sum-title { font-size: 26px; font-weight:800; }
-  .sum-score { font-size: 50px; font-weight:800; line-height:1; }
-  .sum-score .sum-c { color: var(--green); }
-  .sum-score .sum-w { color: var(--accent2); }
-  .sum-time  { font-size: 18px; font-weight:600; color: var(--blue); }
-  .sum-msg   { font-size: 14px; color: var(--muted); }
-  .sum-again {
-    border: none; border-radius: 16px; padding: 11px 32px;
-    background: var(--accent); color: #3a2e00;
-    font-family:'Kanit',sans-serif; font-size:16px; font-weight:700;
-    cursor: pointer; transition: transform .08s;
-  }
-  .sum-again:active { transform: scale(.94); }
 
-  /* ── RIGHT ── */
+  /* top glow accent */
+  .card::before {
+    content: ''; position:absolute; inset:0;
+    background: radial-gradient(ellipse 80% 50% at 50% -5%,
+      rgba(251,191,36,.10) 0%, transparent 70%);
+    pointer-events:none;
+  }
+
+  /* animated ring when correct */
+  .card::after {
+    content: ''; position:absolute; inset:-2px;
+    border-radius: 34px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .4s;
+  }
+  .card.flash-correct::after { animation: ringGreen .5s ease; }
+  .card.flash-wrong::after   { animation: ringRed   .5s ease; }
+
+  @keyframes ringGreen {
+    0%  { opacity:1; box-shadow:0 0 0 3px var(--green),  0 0 30px var(--green-glow); }
+    100%{ opacity:0; box-shadow:0 0 0 8px transparent,    0 0 0px transparent; }
+  }
+  @keyframes ringRed {
+    0%  { opacity:1; box-shadow:0 0 0 3px var(--red), 0 0 30px var(--red-glow); }
+    100%{ opacity:0; box-shadow:0 0 0 8px transparent, 0 0 0px transparent; }
+  }
+
+  .equation { display:flex; align-items:center; gap: clamp(12px,2.2vw,32px); }
+
+  .num {
+    font-size: clamp(52px,8vw,96px);
+    font-weight: 900; line-height: 1;
+    min-width: 1.5ch; text-align:center;
+    background: linear-gradient(160deg, #fff 30%, rgba(255,255,255,.6) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .num.pop { animation: pop .2s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes pop {
+    0%  { transform:scale(.5); opacity:0; }
+    100%{ transform:scale(1);  opacity:1; }
+  }
+
+  .op {
+    font-size: clamp(32px,4.8vw,58px);
+    font-weight: 300; line-height:1;
+    color: var(--accent);
+    text-shadow: 0 0 20px var(--accent-glow);
+  }
+
+  .divider {
+    width: 72%; height: 1.5px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
+  }
+
+  .answer-zone {
+    min-height: clamp(44px,5.5vw,64px);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .answer-text {
+    font-size: clamp(38px,5.5vw,60px); font-weight:800;
+    color: var(--accent);
+    opacity:0; transform:translateY(8px) scale(.9);
+    transition: opacity .25s, transform .25s, color .2s;
+  }
+  .answer-text.visible { opacity:1; transform:translateY(0) scale(1); }
+  .answer-placeholder {
+    font-size: clamp(18px,2.4vw,26px); font-weight:300;
+    color: var(--muted); letter-spacing:.08em;
+  }
+
+  .result-badge {
+    font-size: 13px; font-weight: 700; padding: 4px 16px;
+    border-radius:999px; opacity:0; transition:opacity .35s;
+    min-height: 24px; letter-spacing:.02em;
+  }
+  .result-badge.correct { background:rgba(52,211,153,.18); color:var(--green); opacity:1;
+    box-shadow: 0 0 12px rgba(52,211,153,.2); }
+  .result-badge.wrong   { background:rgba(248,113,113,.15); color:var(--red);   opacity:1;
+    box-shadow: 0 0 12px rgba(248,113,113,.2); }
+  .result-badge.reveal  { background:rgba(251,191,36,.14);  color:var(--accent);opacity:1; }
+
+  .streak {
+    font-size: 12px; font-weight:700;
+    color: var(--accent); letter-spacing:.05em;
+    min-height: 16px;
+    text-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  /* ════════════════════════
+     CHOICE BUTTONS
+  ════════════════════════ */
+  .choice-row { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:4px; }
+
+  .choice-btn {
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 22px;
+    background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+    color: var(--text);
+    font-family: 'Kanit', sans-serif;
+    font-size: clamp(34px,5.5vw,52px); font-weight: 800;
+    padding: clamp(18px,3vh,30px) 0;
+    cursor: pointer;
+    transition: transform .09s, background .15s, border-color .15s, box-shadow .15s;
+    -webkit-user-select:none; user-select:none;
+  }
+  .choice-btn:active { transform: scale(.94); }
+  .choice-btn:disabled { cursor: default; }
+  .choice-btn.choice-correct {
+    background: rgba(52,211,153,.18); border-color: var(--green);
+    color: var(--green); box-shadow: 0 0 20px var(--green-glow);
+  }
+  .choice-btn.choice-wrong {
+    background: rgba(248,113,113,.15); border-color: var(--red);
+    color: var(--red); box-shadow: 0 0 16px var(--red-glow);
+  }
+  .choice-btn.choice-dim { opacity: .28; }
+
+  /* ════════════════════════
+     BATCH / 10-QUESTION SHEET
+  ════════════════════════ */
+  .sheet-wrap {
+    width:100%; max-width:540px;
+    display:none; flex-direction:column;
+    gap:8px; min-height:0; flex:1;
+    position:relative;
+  }
+  .sheet-wrap.visible { display:flex; }
+
+  .sheet-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 0 2px;
+  }
+  .sheet-progress { font-size:12px; font-weight:700; color:var(--muted); white-space:nowrap; }
+  .sheet-progress span { color:var(--text); }
+  .prog-bar-wrap { flex:1; height:5px; background:rgba(255,255,255,.07); border-radius:99px; margin:0 12px; overflow:hidden; }
+  .prog-bar { height:100%; width:0; background:linear-gradient(90deg,var(--green),var(--accent)); border-radius:99px; transition:width .35s; }
+
+  .sheet-list { flex:1; display:flex; flex-direction:column; gap:5px; overflow-y:auto; padding-right:4px; }
+  .sheet-list::-webkit-scrollbar { width:3px; }
+  .sheet-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,.12); border-radius:3px; }
+
+  .q-row {
+    display:grid; grid-template-columns:24px 1fr auto;
+    align-items:center; gap:8px;
+    background: var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px; padding:7px 12px;
+    transition:border-color .2s, background .2s;
+  }
+  .q-row.active-row { border-color:rgba(251,191,36,.5); background:rgba(251,191,36,.06); }
+  .q-row.done-correct { border-color:rgba(52,211,153,.3); background:rgba(52,211,153,.05); }
+  .q-row.done-wrong   { border-color:rgba(248,113,113,.3); background:rgba(248,113,113,.05); }
+
+  .q-num { font-size:11.5px; font-weight:700; color:var(--muted); text-align:right; }
+  .q-num.active-num { color:var(--accent); }
+  .q-eq { font-size:clamp(14px,1.9vw,19px); font-weight:700; }
+  .q-eq .q-blank { display:inline-block; min-width:30px; border-bottom:2px solid rgba(255,255,255,.2); text-align:center; margin-left:4px; color:var(--muted); font-weight:400; }
+  .q-eq .q-blank.filled { color:var(--text); border-color:var(--accent); }
+  .q-eq .q-blank.correct-ans { color:var(--green); border-color:var(--green); }
+  .q-eq .q-blank.wrong-ans   { color:var(--red);   border-color:var(--red); }
+  .q-icon { font-size:15px; min-width:18px; text-align:center; }
+
+  /* summary */
+  .summary {
+    display:none; position:absolute; inset:0;
+    background:rgba(9,8,26,.94);
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; z-index:10; border-radius:24px;
+  }
+  .summary.visible { display:flex; }
+  .sum-title { font-size:26px; font-weight:800; }
+  .sum-score { font-size:52px; font-weight:900; line-height:1; }
+  .sum-score .sum-c { color:var(--green); text-shadow:0 0 20px var(--green-glow); }
+  .sum-score .sum-w { color:var(--red); }
+  .sum-time { font-size:17px; font-weight:600; color:var(--blue); }
+  .sum-msg { font-size:14px; color:var(--muted); }
+  .sum-again {
+    border:none; border-radius:16px; padding:11px 32px;
+    background:var(--accent); color:#3a2600;
+    font-family:'Kanit',sans-serif; font-size:16px; font-weight:800;
+    cursor:pointer; transition:transform .08s;
+    box-shadow:0 0 20px var(--accent-glow);
+  }
+  .sum-again:active { transform:scale(.94); }
+
+  /* ════════════════════════
+     RIGHT PANEL — NUMPAD
+  ════════════════════════ */
   .right {
     grid-area: right;
     display: flex; flex-direction: column;
     gap: 10px; justify-content: center;
   }
+
   .numpad {
     display: grid; grid-template-columns: repeat(3,1fr);
-    gap: 9px; align-content: center; flex:1;
+    gap: 8px; align-content: center; flex:1;
   }
-  .key {
-    background: var(--surface);
-    border: 1px solid rgba(255,255,255,.10);
-    border-radius: 15px;
-    padding: clamp(11px,1.8vh,19px) 0;
-    font-family:'Kanit',sans-serif;
-    font-size: clamp(19px,2.5vh,29px); font-weight:600;
-    color: var(--text); cursor:pointer;
-    transition: background .1s, transform .07s;
-    -webkit-user-select:none; user-select:none;
-  }
-  .key:active { transform:scale(.91); background:var(--surface-hi); }
-  .key.action { background:rgba(247,201,72,.13); border-color:rgba(247,201,72,.28); color:var(--accent); }
-  .key.action:active { background:rgba(247,201,72,.24); }
-  .key.del    { background:rgba(255,107,107,.10); border-color:rgba(255,107,107,.22); color:var(--accent2); font-size:clamp(14px,1.8vh,21px); }
-  .controls { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
-  .btn {
-    border:none; border-radius:15px; padding:clamp(10px,1.6vh,16px);
-    font-family:'Kanit',sans-serif; font-size:clamp(13px,1.6vh,17px); font-weight:600;
-    cursor:pointer; transition:transform .07s, opacity .1s;
-    -webkit-user-select:none; user-select:none;
-  }
-  .btn:active { transform:scale(.94); opacity:.85; }
-  .btn-new    { background:var(--green);  color:#0f3020; }
-  .btn-reveal { background:var(--accent); color:#3a2e00; }
-  .btn-batch  { background: var(--purple); color:#1a0a2e; grid-column:1/-1; }
 
-  /* time-up overlay flash on whole left col */
-  @keyframes timeUpPulse {
-    0%,100% { box-shadow: none; }
-    50% { box-shadow: 0 0 0 6px rgba(255,107,107,.5); }
+  .key {
+    background: linear-gradient(160deg, rgba(255,255,255,.09) 0%, rgba(255,255,255,.04) 100%);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 18px;
+    padding: clamp(11px,1.8vh,20px) 0;
+    font-family:'Kanit',sans-serif;
+    font-size: clamp(20px,2.5vh,30px); font-weight: 800;
+    color: var(--text); cursor:pointer;
+    transition: background .1s, transform .07s, box-shadow .1s;
+    -webkit-user-select:none; user-select:none;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25), 0 1px 0 rgba(255,255,255,.08) inset;
   }
+  .key:active {
+    transform: scale(.91) translateY(1px);
+    background: rgba(255,255,255,.12);
+    box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  }
+
+  .key.action {
+    background: linear-gradient(145deg, rgba(251,191,36,.25), rgba(251,191,36,.12));
+    border-color: rgba(251,191,36,.4);
+    color: var(--accent);
+    box-shadow: 0 0 14px rgba(251,191,36,.15), 0 2px 8px rgba(0,0,0,.25);
+  }
+  .key.action:active { background: rgba(251,191,36,.3); }
+
+  .key.del {
+    background: linear-gradient(145deg, rgba(248,113,113,.15), rgba(248,113,113,.07));
+    border-color: rgba(248,113,113,.28);
+    color: var(--red);
+    font-size: clamp(15px,2vh,22px);
+  }
+
+  .controls { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+  .btn {
+    border:none; border-radius:16px; padding:clamp(10px,1.6vh,16px);
+    font-family:'Kanit',sans-serif; font-size:clamp(13px,1.6vh,16px); font-weight:700;
+    cursor:pointer; transition:transform .07s, opacity .1s, box-shadow .1s;
+    -webkit-user-select:none; user-select:none; letter-spacing:.01em;
+  }
+  .btn:active { transform:scale(.93); opacity:.85; }
+  .btn-new    {
+    background:linear-gradient(135deg,#059669,#10b981);
+    color:#fff;
+    box-shadow:0 0 16px rgba(16,185,129,.25);
+  }
+  .btn-reveal {
+    background:linear-gradient(135deg,#d97706,#f59e0b);
+    color:#fff;
+    box-shadow:0 0 16px rgba(245,158,11,.2);
+  }
+  .btn-batch  {
+    background:linear-gradient(135deg,#7c3aed,#8b5cf6);
+    color:#fff; grid-column:1/-1;
+    box-shadow:0 0 16px rgba(139,92,246,.2);
+  }
+
+  /* ════════════════════════
+     STATS MODAL
+  ════════════════════════ */
+  .stats-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(9,8,26,.8);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    align-items:center; justify-content:center;
+    z-index:100; padding:20px;
+  }
+  .stats-overlay.visible { display:flex; }
+
+  .stats-modal {
+    width:100%; max-width:620px; max-height:88vh;
+    background:linear-gradient(150deg,#16122e,#1e1840);
+    border:1px solid rgba(167,139,250,.2);
+    border-radius:28px; padding:24px 26px;
+    display:flex; flex-direction:column; gap:14px;
+    box-shadow:0 24px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.05) inset;
+    position:relative;
+  }
+
+  .stats-head { display:flex; align-items:center; justify-content:space-between; }
+  .stats-title { font-size:20px; font-weight:800; }
+  .stats-title span { color:var(--purple); }
+  .stats-close {
+    border:none; background:var(--surface); border:1px solid var(--border);
+    color:var(--text); width:32px; height:32px; border-radius:50%;
+    font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition: background .15s;
+  }
+  .stats-close:hover { background: rgba(248,113,113,.2); }
+
+  .stats-tabs { display:flex; gap:5px; flex-wrap:wrap; }
+  .stats-tab {
+    border:none; border-radius:999px; padding:5px 13px;
+    background:var(--surface); border:1px solid var(--border);
+    color:var(--muted); font-family:'Kanit',sans-serif;
+    font-size:11.5px; font-weight:700; cursor:pointer; white-space:nowrap;
+    transition: background .15s, color .15s;
+  }
+  .stats-tab.on-stat { background:var(--purple); border-color:var(--purple); color:#fff; }
+
+  .stats-body { overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:8px; }
+  .stats-body::-webkit-scrollbar { width:3px; }
+  .stats-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,.12); border-radius:3px; }
+
+  .stats-empty { color:var(--muted); font-size:14px; text-align:center; padding:28px 0; }
+
+  .stats-summary-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .stats-sumcard {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:10px 8px; text-align:center;
+  }
+  .stats-sumcard .sc-label { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+  .stats-sumcard .sc-value { font-size:22px; font-weight:800; margin-top:2px; }
+  .stats-sumcard .sc-value.green { color:var(--green); }
+  .stats-sumcard .sc-value.blue  { color:var(--blue); }
+  .stats-sumcard .sc-value.gold  { color:var(--accent); }
+
+  .stat-row {
+    display:grid; grid-template-columns:auto 1fr auto auto;
+    align-items:center; gap:10px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:9px 14px;
+    transition: border-color .2s;
+  }
+  .stat-row.is-best { border-color:rgba(251,191,36,.4); background:rgba(251,191,36,.05); }
+  .stat-badge { font-size:17px; }
+  .stat-meta { display:flex; flex-direction:column; gap:2px; }
+  .stat-meta .meta-main { font-size:13px; font-weight:700; }
+  .stat-meta .meta-sub  { font-size:10.5px; color:var(--muted); }
+  .stat-result { text-align:right; }
+  .stat-result .res-main { font-size:15px; font-weight:800; }
+  .stat-result .res-main.green { color:var(--green); }
+  .stat-result .res-main.gold  { color:var(--accent); }
+  .stat-result .res-sub { font-size:10px; color:var(--muted); }
+  .stat-del { border:none; background:transparent; color:var(--muted); font-size:15px; cursor:pointer; padding:4px; }
+  .stat-del:active { color:var(--red); }
+
+  .stats-footer { display:flex; justify-content:flex-end; }
+  .stats-clear {
+    border:none; border-radius:12px; padding:8px 16px;
+    background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.25);
+    color:var(--red); font-family:'Kanit',sans-serif; font-size:12px; font-weight:700; cursor:pointer;
+  }
+
+  /* PLAYER PANEL */
+  .player-panel {
+    background:rgba(96,165,250,.06); border:1px solid rgba(96,165,250,.15);
+    border-radius:16px; padding:12px 14px; display:flex; flex-direction:column; gap:9px;
+  }
+  .player-panel-head { display:flex; align-items:center; justify-content:space-between; }
+  .player-panel-title { font-size:12.5px; font-weight:700; color:var(--blue); letter-spacing:.04em; }
+  .player-add-btn {
+    border:none; border-radius:999px;
+    background:rgba(96,165,250,.15); color:var(--blue);
+    font-family:'Kanit',sans-serif; font-size:11.5px; font-weight:700;
+    padding:4px 12px; cursor:pointer;
+  }
+  .player-list { display:flex; flex-wrap:wrap; gap:7px; }
+  .player-tag {
+    display:flex; align-items:center; gap:5px;
+    border-radius:999px; padding:4px 9px 4px 5px;
+    border:1px solid var(--border); background:var(--surface);
+    cursor:pointer; transition:background .12s, border-color .12s, transform .07s;
+  }
+  .player-tag:active { transform:scale(.93); }
+  .player-tag.active-player { border-color:var(--accent); background:rgba(251,191,36,.1); }
+  .player-tag .pt-avatar { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; }
+  .player-tag .pt-name { font-size:12px; font-weight:700; max-width:80px; overflow:hidden; text-overflow:ellipsis; }
+  .player-tag .pt-del { font-size:10px; color:var(--muted); background:none; border:none; cursor:pointer; padding:0 2px; }
+  .player-tag .pt-del:active { color:var(--red); }
+  .player-input-row { display:flex; gap:7px; }
+  .player-input-row input { flex:1; background:var(--surface); border:1px solid rgba(255,255,255,.15); border-radius:10px; color:var(--text); font-family:'Kanit',sans-serif; font-size:13.5px; padding:6px 11px; }
+  .player-input-row button { border:none; border-radius:10px; padding:6px 14px; background:var(--blue); color:#001433; font-family:'Kanit',sans-serif; font-size:12.5px; font-weight:700; cursor:pointer; }
+
+  .player-filter-row { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .pf-label { font-size:10.5px; color:var(--muted); white-space:nowrap; }
+  .pf-btn { border:1px solid var(--border); border-radius:999px; padding:4px 11px; background:var(--surface); font-family:'Kanit',sans-serif; font-size:11.5px; font-weight:700; color:var(--muted); cursor:pointer; }
+  .pf-btn.active-pf { background:rgba(251,191,36,.16); border-color:var(--accent); color:var(--accent); }
+
+  /* confirm dialog */
+  .confirm-box {
+    display:none; position:absolute; inset:0;
+    background:rgba(9,8,26,.94); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border-radius:28px; flex-direction:column; align-items:center; justify-content:center;
+    gap:18px; z-index:200; padding:28px; text-align:center;
+  }
+  .confirm-box.visible { display:flex; }
+  .confirm-text { font-size:16px; font-weight:700; line-height:1.5; }
+  .confirm-text span { font-size:12.5px; font-weight:400; color:var(--muted); }
+  .confirm-actions { display:flex; gap:10px; }
+  .confirm-btn { border:none; border-radius:13px; padding:10px 22px; font-family:'Kanit',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:transform .08s; }
+  .confirm-btn:active { transform:scale(.94); }
+  .confirm-cancel { background:var(--surface); border:1px solid var(--border); color:var(--text); }
+  .confirm-ok { background:var(--red); color:#fff; }
+
+  /* timeup pulse */
+  @keyframes timeUpPulse { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 0 6px rgba(248,113,113,.45)} }
   .timeup-pulse { animation: timeUpPulse .6s ease 2; }
+
+  /* toolbar (hidden, kept for JS compat) */
+  .toolbar { display:none !important; }
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- HEADER -->
-  <header>
-    <div class="title">บวก<span>เลข</span>เร็ว ⚡</div>
+  <!-- SETTINGS DRAWER BACKDROP -->
+  <div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
 
-    <div class="header-controls">
+  <!-- SETTINGS DRAWER -->
+  <div class="settings-drawer" id="settingsDrawer">
+    <div class="drawer-title">⚙️ ตั้งค่าเกม</div>
+
+    <div class="drawer-row">
+      <span class="drawer-label">โหมด</span>
       <div class="pillgroup" id="modeGroup">
         <button class="pill-btn on-mode" data-mode="A" onclick="setQuestionMode('A')">🎯 ทีละข้อ</button>
         <button class="pill-btn" data-mode="B" onclick="setQuestionMode('B')">📋 10 ข้อ</button>
         <button class="pill-btn" data-mode="C" onclick="setQuestionMode('C')">🔘 เลือกตอบ</button>
       </div>
+    </div>
 
+    <div class="drawer-row">
+      <span class="drawer-label">ระดับ</span>
       <div class="pillgroup" id="diffGroup">
         <button class="pill-btn on-diff" data-diff="normal" onclick="setDifficulty('normal')">😊 ปกติ</button>
         <button class="pill-btn" data-diff="hard" onclick="setDifficulty('hard')">🔥 ยาก</button>
       </div>
+    </div>
 
-      <div class="pillgroup" id="timeGroup">
-        <button class="pill-btn" data-secs="30" onclick="setTimerPreset(30)">30 วิ</button>
-        <button class="pill-btn" data-secs="60" onclick="setTimerPreset(60)">1 นาที</button>
-        <button class="pill-btn" data-secs="180" onclick="setTimerPreset(180)">3 นาที</button>
-        <button class="pill-btn" data-secs="custom" onclick="showCustomTimer()">กำหนดเอง</button>
-        <button class="pill-btn" data-secs="0" onclick="setTimerPreset(0)">ไม่จับเวลา</button>
-      </div>
-
-      <button class="reset-btn" onclick="resetScore()">↺ รีเซ็ตคะแนน</button>
-
-      <button id="muteBtn" onclick="toggleMute()" style="
-        border:none; border-radius:999px; background:var(--surface);
-        border:1px solid rgba(255,255,255,.12); color:var(--text);
-        font-size:17px; width:36px; height:36px; cursor:pointer;
-        transition:transform .08s;" title="เปิด/ปิดเสียง">🔊</button>
-
-      <div class="player-chip" onclick="openStats()" title="เปลี่ยนผู้เล่น">
-        <div class="player-avatar" id="headerAvatar" style="background:#5eb8ff22;color:var(--blue)">?</div>
-        <span class="player-chip-name" id="headerName">เลือกผู้เล่น</span>
-        <span class="player-chip-arrow">▾</span>
-      </div>
-
-      <button class="stats-btn" onclick="openStats()">🏆 สถิติ</button>
-
-      <div class="score-pill">
-        <div class="score-item"><span class="score-label">ถูก</span><span class="score-value green" id="scoreCorrect">0</span></div>
-        <div class="score-item"><span class="score-label">ผิด</span><span class="score-value red" id="scoreWrong">0</span></div>
-        <div class="score-item"><span class="score-label">รวม</span><span class="score-value" id="scoreTotal">0</span></div>
+    <div class="drawer-row">
+      <span class="drawer-label">โจทย์</span>
+      <div class="pillgroup" id="opGroup">
+        <button class="pill-btn on-op" data-op="add"  onclick="setOperator('add')">＋</button>
+        <button class="pill-btn" data-op="sub"  onclick="setOperator('sub')">－</button>
+        <button class="pill-btn" data-op="mul"  onclick="setOperator('mul')">×</button>
+        <button class="pill-btn" data-op="div"  onclick="setOperator('div')">÷</button>
+        <button class="pill-btn" data-op="mix"  onclick="setOperator('mix')">🎲 ผสม</button>
       </div>
     </div>
-  </header>
 
-  <!-- CUSTOM TIMER TOOLBAR -->
-  <div class="toolbar" id="customToolbar">
-    <label>กำหนดเวลาเอง (วินาที):</label>
-    <input type="number" id="customSecsInput" min="5" max="3600" value="90">
-    <button onclick="applyCustomTimer()">✓ ใช้เวลานี้</button>
+    <div class="drawer-row">
+      <span class="drawer-label">เวลา</span>
+      <div class="pillgroup" id="timeGroup">
+        <button class="pill-btn" data-secs="30"     onclick="setTimerPreset(30)">30 วิ</button>
+        <button class="pill-btn" data-secs="60"     onclick="setTimerPreset(60)">1 นาที</button>
+        <button class="pill-btn" data-secs="180"    onclick="setTimerPreset(180)">3 นาที</button>
+        <button class="pill-btn" data-secs="custom" onclick="showCustomTimer()">กำหนดเอง</button>
+        <button class="pill-btn" data-secs="0"      onclick="setTimerPreset(0)">ไม่จับเวลา</button>
+      </div>
+      <div class="custom-time-row" id="customToolbar">
+        <label>วินาที:</label>
+        <input type="number" id="customSecsInput" min="5" max="3600" value="90">
+        <button onclick="applyCustomTimer()">✓ ใช้</button>
+      </div>
+    </div>
+
+    <div class="drawer-actions">
+      <button class="drawer-action-btn da-reset" onclick="resetScore()">↺ รีเซ็ตคะแนน</button>
+    </div>
   </div>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="title">คณิต<em>เร็ว</em> ⚡</div>
+
+    <div class="scorebar">
+      <div class="sc-block">
+        <span class="sc-label">ถูก</span>
+        <span class="sc-val g" id="scoreCorrect">0</span>
+      </div>
+      <div class="sc-sep"></div>
+      <div class="sc-block">
+        <span class="sc-label">ผิด</span>
+        <span class="sc-val r" id="scoreWrong">0</span>
+      </div>
+      <div class="sc-sep"></div>
+      <div class="sc-block">
+        <span class="sc-label">รวม</span>
+        <span class="sc-val" id="scoreTotal">0</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <button class="settings-toggle" id="settingsToggle" onclick="toggleDrawer()" title="ตั้งค่า">⚙️</button>
+      <button class="icon-btn" id="muteBtn" onclick="toggleMute()" title="เสียง">🔊</button>
+      <div class="player-chip" onclick="openStats()" title="ผู้เล่น / สถิติ">
+        <div class="player-avatar" id="headerAvatar" style="background:rgba(96,165,250,.2);color:var(--blue)">?</div>
+        <span class="player-chip-name" id="headerName">ผู้เล่น</span>
+      </div>
+      <button class="icon-btn" onclick="openStats()" title="สถิติ">🏆</button>
+    </div>
+  </div>
+
+  <!-- hidden toolbar div for JS compat -->
+  <div class="toolbar" id="customToolbar2"></div>
 
   <!-- LEFT -->
   <div class="left" id="leftCol">
 
-    <!-- COUNTDOWN BAR -->
-    <div class="countdown-wrap" id="countdownWrap" style="display:none">
-      <span class="cd-label">⏱ เวลาที่เหลือ</span>
+    <!-- COUNTDOWN -->
+    <div class="cd-wrap" id="countdownWrap">
+      <span class="cd-label">⏱</span>
       <div class="cd-bar-wrap"><div class="cd-bar" id="cdBar"></div></div>
       <span class="cd-time" id="cdTime">00:00</span>
       <button class="cd-playbtn" id="cdPlayBtn" onclick="cdToggle()">▶ เริ่ม</button>
@@ -690,7 +844,7 @@
     <div class="card" id="card">
       <div class="equation">
         <span class="num" id="num1">—</span>
-        <span class="op">+</span>
+        <span class="op" id="opSymbol">+</span>
         <span class="num" id="num2">—</span>
       </div>
       <div class="divider"></div>
@@ -702,11 +856,11 @@
       <div class="streak" id="streak"></div>
     </div>
 
-    <!-- CHOICE CARD (2-option) -->
+    <!-- CHOICE CARD -->
     <div class="card" id="cardC" style="display:none">
       <div class="equation">
         <span class="num" id="cNum1">—</span>
-        <span class="op">+</span>
+        <span class="op" id="cOpSymbol">+</span>
         <span class="num" id="cNum2">—</span>
       </div>
       <div class="divider"></div>
@@ -718,7 +872,7 @@
       <div class="streak" id="streakC"></div>
     </div>
 
-    <!-- 10-QUESTION SHEET -->
+    <!-- BATCH SHEET -->
     <div class="sheet-wrap" id="sheetWrap">
       <div class="sheet-header">
         <span class="sheet-progress">ข้อ <span id="sheetCur">1</span> / <span id="sheetTotal">10</span></span>
@@ -730,7 +884,7 @@
         <div class="sum-title" id="sumTitle">🎉 จบแล้ว!</div>
         <div class="sum-score">
           <span class="sum-c" id="sumC">0</span>
-          <span style="color:var(--muted);font-size:30px"> / </span>
+          <span style="color:var(--muted);font-size:28px"> / </span>
           <span class="sum-w" id="sumW">0</span>
         </div>
         <div class="sum-time" id="sumTime"></div>
@@ -741,7 +895,7 @@
 
   </div>
 
-  <!-- RIGHT -->
+  <!-- RIGHT — NUMPAD -->
   <div class="right">
     <div class="numpad" id="numpad">
       <button class="key" onclick="press(7)">7</button>
@@ -780,7 +934,6 @@
       <button class="stats-close" onclick="closeStats()">✕</button>
     </div>
 
-    <!-- PLAYER PANEL -->
     <div class="player-panel">
       <div class="player-panel-head">
         <span class="player-panel-title">👤 ผู้เล่น</span>
@@ -795,17 +948,16 @@
     </div>
 
     <div class="stats-summary-row" id="statsSummaryRow"></div>
-
     <div class="player-filter-row" id="playerFilterRow"></div>
 
     <div class="stats-tabs">
-      <button class="stats-tab on-stat" data-stat="all"   onclick="setStatsFilter('all')">ทั้งหมด</button>
-      <button class="stats-tab" data-stat="single-normal" onclick="setStatsFilter('single-normal')">ทีละข้อ · ปกติ</button>
-      <button class="stats-tab" data-stat="single-hard"   onclick="setStatsFilter('single-hard')">ทีละข้อ · ยาก</button>
-      <button class="stats-tab" data-stat="batch-normal"  onclick="setStatsFilter('batch-normal')">10 ข้อ · ปกติ</button>
-      <button class="stats-tab" data-stat="batch-hard"    onclick="setStatsFilter('batch-hard')">10 ข้อ · ยาก</button>
-      <button class="stats-tab" data-stat="choice-normal" onclick="setStatsFilter('choice-normal')">เลือกตอบ · ปกติ</button>
-      <button class="stats-tab" data-stat="choice-hard"   onclick="setStatsFilter('choice-hard')">เลือกตอบ · ยาก</button>
+      <button class="stats-tab on-stat" data-stat="all"    onclick="setStatsFilter('all')">ทั้งหมด</button>
+      <button class="stats-tab" data-stat="single-normal"  onclick="setStatsFilter('single-normal')">ทีละข้อ · ปกติ</button>
+      <button class="stats-tab" data-stat="single-hard"    onclick="setStatsFilter('single-hard')">ทีละข้อ · ยาก</button>
+      <button class="stats-tab" data-stat="batch-normal"   onclick="setStatsFilter('batch-normal')">10 ข้อ · ปกติ</button>
+      <button class="stats-tab" data-stat="batch-hard"     onclick="setStatsFilter('batch-hard')">10 ข้อ · ยาก</button>
+      <button class="stats-tab" data-stat="choice-normal"  onclick="setStatsFilter('choice-normal')">เลือกตอบ · ปกติ</button>
+      <button class="stats-tab" data-stat="choice-hard"    onclick="setStatsFilter('choice-hard')">เลือกตอบ · ยาก</button>
     </div>
 
     <div class="stats-body" id="statsBody"></div>
@@ -814,7 +966,6 @@
       <button class="stats-clear" onclick="askClearStats()">🗑 ล้างสถิติทั้งหมด</button>
     </div>
 
-    <!-- in-app confirm dialog (replaces native confirm() which some iPad webviews block) -->
     <div class="confirm-box" id="confirmBox">
       <div class="confirm-text">ล้างสถิติทั้งหมด?<br><span>การกระทำนี้ไม่สามารถย้อนกลับได้</span></div>
       <div class="confirm-actions">
@@ -833,14 +984,67 @@ let qMode = 'A';          // 'A' single | 'B' batch10
 let difficulty = 'normal'; // 'normal' | 'hard'
 let input = '';
 
-function randNum() {
-  return difficulty === 'hard'
-    ? Math.floor(Math.random()*50) + 1   // 1-50
-    : Math.floor(Math.random()*10);      // 0-9
+let operator = 'add'; // 'add'|'sub'|'mul'|'div'|'mix'
+
+function setOperator(op) {
+  operator = op;
+  document.querySelectorAll('#opGroup .pill-btn').forEach(b=>b.classList.toggle('on-op', b.dataset.op===op));
+  if (qMode === 'A') generate();
+  else if (qMode === 'B') batchGenerate();
+  else choiceGenerate();
+}
+
+/* returns the actual operator for this question (resolves 'mix') */
+function pickOp() {
+  if (operator !== 'mix') return operator;
+  return ['add','sub','mul','div'][Math.floor(Math.random()*4)];
+}
+
+/* generate one number based on role and operator */
+function randNum(role, op) {
+  // role: 'a' or 'b'
+  const hard = difficulty === 'hard';
+  if (op === 'mul' || op === 'div') {
+    return hard ? Math.floor(Math.random()*12)+1 : Math.floor(Math.random()*10)+1;
+  }
+  // add / sub
+  return hard ? Math.floor(Math.random()*50)+1 : Math.floor(Math.random()*10);
+}
+
+/* returns {a, b, op, right, sym, displayA, displayB}
+   for division: displayA is the product (dividend), displayB is the divisor */
+function makeQuestion() {
+  const op = pickOp();
+  let a, b, right, sym, displayA, displayB;
+
+  if (op === 'add') {
+    a = randNum('a', op); b = randNum('b', op);
+    right = a + b; sym = '+'; displayA = a; displayB = b;
+  } else if (op === 'sub') {
+    a = randNum('a', op); b = randNum('b', op);
+    // ensure a >= b so result is non-negative
+    if (a < b) [a, b] = [b, a];
+    right = a - b; sym = '−'; displayA = a; displayB = b;
+  } else if (op === 'mul') {
+    a = randNum('a', op); b = randNum('b', op);
+    right = a * b; sym = '×'; displayA = a; displayB = b;
+  } else { // div — generate as b × a, show product ÷ b
+    a = randNum('a', op); b = randNum('b', op);
+    const product = a * b;
+    right = a;           // answer is a
+    sym = '÷'; displayA = product; displayB = b;
+  }
+  return { a, b, op, right, sym, displayA, displayB };
+}
+
+/* max digits for input box based on operator */
+function maxInputLen() {
+  if (operator === 'mul' || operator === 'mix') return 3; // up to 12×12=144
+  return difficulty === 'hard' ? 3 : 2;
 }
 
 function pressRaw(n) {
-  const maxLen = difficulty === 'hard' ? 3 : 2;
+  const maxLen = maxInputLen();
   if (input.length >= maxLen) return;
   if (input === '0') input = '';
   input += n;
@@ -895,9 +1099,11 @@ function setDifficulty(d) {
    SINGLE MODE
 ═══════════════════════════════════════ */
 let a = 0, b = 0, answered = false, streak = 0;
+let currentQ = null; // stores {a,b,op,right,sym,displayA,displayB}
 
 const num1El      = document.getElementById('num1');
 const num2El      = document.getElementById('num2');
+const opSymbolEl  = document.getElementById('opSymbol');
 const answerText  = document.getElementById('answerText');
 const answerPH    = document.getElementById('answerPH');
 const resultBadge = document.getElementById('resultBadge');
@@ -906,9 +1112,12 @@ const cardEl      = document.getElementById('card');
 
 function generate() {
   answered = false; input = '';
-  a = randNum(); b = randNum();
+  currentQ = makeQuestion();
+  a = currentQ.displayA; b = currentQ.displayB;
   [num1El, num2El].forEach(el => { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); });
-  num1El.textContent = a; num2El.textContent = b;
+  num1El.textContent = currentQ.displayA;
+  opSymbolEl.textContent = currentQ.sym;
+  num2El.textContent = currentQ.displayB;
   answerText.textContent = ''; answerText.classList.remove('visible');
   answerPH.style.display = '';
   resultBadge.className = 'result-badge'; resultBadge.textContent = '';
@@ -922,7 +1131,7 @@ function updateInputA() {
 
 function confirmA() {
   if (answered || input === '') return;
-  const guess = parseInt(input,10), right = a+b;
+  const guess = parseInt(input,10), right = currentQ.right;
   answered = true;
   if (guess === right) {
     streak++;
@@ -952,7 +1161,7 @@ function confirmA() {
 function showAnswer() {
   if (answered) return;
   answered = true; streak = 0; addScore(0,1);
-  const right = a+b;
+  const right = currentQ.right;
   answerText.textContent=right; answerText.style.color='var(--accent)'; answerText.classList.add('visible');
   answerPH.style.display='none';
   resultBadge.className='result-badge reveal'; resultBadge.textContent='💡 เฉลย';
@@ -968,8 +1177,11 @@ function showAnswer() {
 ═══════════════════════════════════════ */
 let cA = 0, cB = 0, cAnswered = false, cStreak = 0, cCorrectIdx = 0;
 
+let cCurrentQ = null;
+
 const cNum1El   = document.getElementById('cNum1');
 const cNum2El   = document.getElementById('cNum2');
+const cOpSymbolEl = document.getElementById('cOpSymbol');
 const cardCEl   = document.getElementById('cardC');
 const resultBadgeC = document.getElementById('resultBadgeC');
 const streakCEl = document.getElementById('streakC');
@@ -977,22 +1189,28 @@ const choiceBtns = [document.getElementById('choiceBtn0'), document.getElementBy
 
 function choiceGenerate() {
   cAnswered = false;
-  cA = randNum(); cB = randNum();
-  const right = cA + cB;
+  cCurrentQ = makeQuestion();
+  const right = cCurrentQ.right;
 
-  // build a plausible-but-wrong distractor close to the right answer
-  let wrong;
-  const maxVal = difficulty === 'hard' ? 100 : 18;
+  // plausible distractor: close delta, never negative
+  const maxVal = cCurrentQ.op === 'mul' ? (difficulty === 'hard' ? 144 : 100)
+               : cCurrentQ.op === 'div' ? (difficulty === 'hard' ? 12 : 10)
+               : (difficulty === 'hard' ? 100 : 18);
+  let wrong, tries = 0;
   do {
     const delta = [1,1,2,2,-1,-1,-2,-2,3,-3][Math.floor(Math.random()*10)];
     wrong = right + delta;
-  } while (wrong === right || wrong < 0 || wrong > maxVal);
+    tries++;
+  } while ((wrong === right || wrong < 1 || wrong > maxVal) && tries < 30);
+  if (wrong === right || wrong < 1) wrong = right + (right > 1 ? -1 : 1);
 
   cCorrectIdx = Math.random() < 0.5 ? 0 : 1;
   const values = cCorrectIdx === 0 ? [right, wrong] : [wrong, right];
 
   [cNum1El, cNum2El].forEach(el => { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); });
-  cNum1El.textContent = cA; cNum2El.textContent = cB;
+  cNum1El.textContent = cCurrentQ.displayA;
+  cOpSymbolEl.textContent = cCurrentQ.sym;
+  cNum2El.textContent = cCurrentQ.displayB;
 
   choiceBtns.forEach((btn, i) => {
     btn.textContent = values[i];
@@ -1007,7 +1225,7 @@ function choiceGenerate() {
 function choosePick(idx) {
   if (cAnswered) return;
   cAnswered = true;
-  const right = cA + cB;
+  const right = cCurrentQ.right;
   const isCorrect = idx === cCorrectIdx;
 
   choiceBtns.forEach((btn, i) => {
@@ -1062,7 +1280,7 @@ let questions = [], answers = [], batchIdx = 0, batchDone = false;
 function batchGenerate() {
   document.getElementById('summary').classList.remove('visible');
   batchDone = false;
-  questions = Array.from({length:BATCH}, () => ({ a: randNum(), b: randNum() }));
+  questions = Array.from({length:BATCH}, () => makeQuestion());
   answers = Array(BATCH).fill(null);
   batchIdx = 0;
   input = '';
@@ -1074,7 +1292,7 @@ function renderSheet() {
   list.innerHTML = '';
   questions.forEach((q, i) => {
     const ans = answers[i];
-    const right = q.a + q.b;
+    const right = q.right;
     const done = ans !== null;
     const ok = done && ans === right;
 
@@ -1100,7 +1318,7 @@ function renderSheet() {
       blankClass += ' filled';
       blankVal = input;
     }
-    eq.innerHTML = `${q.a} + ${q.b} = <span class="${blankClass}">${blankVal}</span>`;
+    eq.innerHTML = `${q.displayA} ${q.sym} ${q.displayB} = <span class="${blankClass}">${blankVal}</span>`;
 
     const ic = document.createElement('div');
     ic.className = 'q-icon';
@@ -1115,8 +1333,8 @@ function renderSheet() {
   document.getElementById('sheetCur').textContent = Math.min(batchIdx+1, questions.length);
   document.getElementById('sheetTotal').textContent = timedExtend ? '∞' : BATCH;
   document.getElementById('progBar').style.width = (timedExtend ? 100 : (doneCount/BATCH*100))+'%';
-  const c = answers.filter((x,i)=> x!==null && x===questions[i].a+questions[i].b).length;
-  const w = answers.filter((x,i)=> x!==null && x!==questions[i].a+questions[i].b).length;
+  const c = answers.filter((x,i)=> x!==null && x===questions[i].right).length;
+  const w = answers.filter((x,i)=> x!==null && x!==questions[i].right).length;
   document.getElementById('sheetScore').innerHTML = `✓ ${c} &nbsp; ✗ ${w}`;
 
   const activeRow = document.getElementById(`qrow-${batchIdx}`);
@@ -1126,7 +1344,7 @@ function renderSheet() {
 function confirmB() {
   if (batchDone || input === '') return;
   const guess = parseInt(input,10);
-  const right = questions[batchIdx].a + questions[batchIdx].b;
+  const right = questions[batchIdx].right;
   answers[batchIdx] = guess;
   addScore(guess===right?1:0, guess===right?0:1);
   input = '';
@@ -1144,7 +1362,7 @@ function batchReveal() {
 function advanceBatch() {
   // Timed mode: keep extending with fresh questions instead of stopping at 10
   if (timerTotal > 0 && cdRunning) {
-    questions.push({ a: randNum(), b: randNum() });
+    questions.push(makeQuestion());
     answers.push(null);
     batchIdx++;
     renderSheet();
@@ -1155,7 +1373,7 @@ function advanceBatch() {
 }
 
 function showSummary(reason) {
-  const c = answers.filter((x,i)=> x!==null && x===questions[i].a+questions[i].b).length;
+  const c = answers.filter((x,i)=> x!==null && x===questions[i].right).length;
   const answeredCount = answers.filter(x=>x!==null).length;
   const w = answeredCount - c;
   document.getElementById('sumC').textContent = c;
@@ -1576,7 +1794,7 @@ function onTimeUp() {
   } else if (qMode === 'A' && !answered) {
     // reveal current answer, lock further input
     answered = true;
-    const right = a + b;
+    const right = currentQ ? currentQ.right : a + b;
     answerText.textContent = right;
     answerText.style.color = 'var(--accent2)';
     answerText.classList.add('visible');
